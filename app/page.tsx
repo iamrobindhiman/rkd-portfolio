@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { getAllPosts } from "@/lib/posts";
 
@@ -8,6 +9,12 @@ export default function Home() {
     <>
       <section className="hero">
         <div className="page">
+          <div className="grid-rules" aria-hidden>
+            {Array.from({ length: 12 }).map((_, i) => (
+              <span key={i} />
+            ))}
+          </div>
+
           <div className="hero-meta">
             <span className="dot" aria-hidden />
             <span>Available — Q2 2026</span>
@@ -16,11 +23,26 @@ export default function Home() {
             <span className="sep">/</span>
             <span>Senior engineer</span>
           </div>
-          <h1 className="display">
-            I build e&#8209;commerce<br />
-            backends<span className="accent">.</span><br />
-            Fifteen years in.
-          </h1>
+
+          <div className="hero-grid">
+            <div>
+              <h1 className="display">
+                I build e&#8209;commerce<br />
+                backends<span className="accent">.</span><br />
+                Fifteen years in.
+              </h1>
+            </div>
+            <Link href="/#contact" className="portrait" aria-label="Robin Dhiman">
+              <Image
+                src="/robin.jpg"
+                alt="Robin Dhiman"
+                width={640}
+                height={640}
+                priority
+              />
+            </Link>
+          </div>
+
           <div className="hero-footer">
             <div>
               <h3>01 / Current</h3>

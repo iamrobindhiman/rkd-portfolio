@@ -68,6 +68,78 @@ img, svg { display: block; max-width: 100%; }
 .page { max-width: var(--page-max); margin: 0 auto; padding: 0 var(--pad-x); position: relative; }
 .narrow { max-width: var(--col-max); margin: 0 auto; padding: 0 var(--pad-x); }
 
+/* 12-col grid rules — visible cobalt vertical lines on desktop */
+.grid-rules {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: none;
+  z-index: 0;
+}
+@media (min-width: 1024px) {
+  .grid-rules {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    column-gap: clamp(12px, 1.6vw, 24px);
+    padding: 0 var(--pad-x);
+  }
+  .grid-rules > span {
+    border-left: 1px solid color-mix(in oklab, var(--accent) 14%, transparent);
+    height: 100%;
+  }
+  .grid-rules > span:first-child { border-left: none; }
+}
+.hero > .page { position: relative; }
+.hero > .page > *:not(.grid-rules) { position: relative; z-index: 1; }
+
+/* Hero image with pop shadow */
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 48px;
+  align-items: start;
+}
+@media (min-width: 1024px) {
+  .hero-grid {
+    grid-template-columns: 1fr 320px;
+    gap: 64px;
+    align-items: start;
+  }
+}
+
+.portrait {
+  position: relative;
+  width: 280px;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  display: block;
+  transition: transform 240ms var(--ease), box-shadow 240ms var(--ease);
+  box-shadow: 5px 5px 0 0 var(--accent);
+  border: 1px solid var(--head);
+  overflow: hidden;
+  background: var(--surface);
+}
+.portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 400ms var(--ease), filter 240ms var(--ease);
+  filter: grayscale(100%) contrast(1.05);
+}
+.portrait:hover {
+  transform: translate(-3px, -3px);
+  box-shadow: 9px 9px 0 0 var(--accent);
+}
+.portrait:hover img {
+  transform: scale(1.04);
+  filter: grayscale(0%) contrast(1);
+}
+@media (min-width: 1024px) {
+  .portrait { width: 100%; max-width: 320px; }
+}
+[data-theme="dark"] .portrait { border-color: var(--rule); }
+
 /* NAV */
 .nav { position: sticky; top: 0; z-index: 40; background: var(--bg); border-bottom: 1px solid var(--rule); }
 .nav-inner { max-width: var(--page-max); margin: 0 auto; padding: 18px var(--pad-x); display: flex; align-items: center; justify-content: space-between; gap: 24px; }
