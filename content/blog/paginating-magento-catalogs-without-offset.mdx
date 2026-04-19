@@ -1,0 +1,151 @@
+---
+title: "Paginating Magento catalogs without OFFSET"
+description: "Why setCurPage() dies at page 1000, and a small pattern that fixes it."
+date: "2026-04-19"
+readTime: "8 min"
+tags: ["Magento 2", "PHP", "Performance"]
+---
+
+There's a quiet performance cliff in Magento. Page 1 of your product listing loads in 10 ms. Page 1000 takes eight seconds. The code didn't change — just the page number.
+
+I hit this while building a module that walks entire Magento catalogs to generate an [llms.txt](https://llmstxt.org/) file. On a 70,000-product store, the standard Magento collection approach took the generator from "fast enough" to "kernel-level slow" somewhere around page 40. This post is about the fix.
+
+## The standard way, and why it breaks
+
+In Magento 2, if you want to iterate through all products, you usually reach for something like:
+
+```php
+$collection = $this->collectionFactory->create()
+    ->addAttributeToSelect('*')
+    ->setPageSize(1000)
+    ->setCurPage($page);
+```
+
+Under the hood, `setPageSize` and `setCurPage` translate to SQL's `LIMIT` and `OFFSET`:
+
+```sql
+SELECT * FROM catalog_product_entity
+ORDER BY entity_id ASC
+LIMIT 1000 OFFSET 999000;
+```
+
+MySQL reads this as: "start from row 1, scan and discard 999,000 rows, then give me the next 1,000." The database doesn't have a shortcut. It walks the index from the start every single time.
+
+That's the cliff. At page 1, `OFFSET 0` is free. At page 1000, `OFFSET 999000` is 999,000 wasted row reads _per request_. The cost scales linearly with page depth — and compounds if the same query runs repeatedly.
+
+## The fix, part one: keyset pagination
+
+Instead of offsetting, use the index you already have — the primary key — as a cursor:
+
+```sql
+SELECT * FROM catalog_product_entity
+WHERE entity_id > :lastId
+ORDER BY entity_id ASC
+LIMIT 1000;
+```
+
+This tells MySQL: "start from the row just after the one I saw last, give me the next 1,000." It's an index range scan — jumping directly to the right spot using the B-tree structure. The cost is the same whether `:lastId` is 0, 10,000, or 1,000,000.
+
+You pass the last `entity_id` you saw into the next query as `:lastId`. The cursor advances through the table without ever scanning-and-discarding.
+
+Sentry's engineering team measured a 17× speedup on their production tables switching from OFFSET to cursor pagination. I saw similar gains in Magento.
+
+Implementation in the module:
+
+```php
+private function buildProductSelect(int $storeId, int $lastId): Select
+{
+    $select = $this->connection->select()
+        ->from('catalog_product_entity')
+        ->where('entity_id > ?', $lastId)
+        ->order('entity_id ASC')
+        ->limit(1000);
+
+    // ... EAV joins, status filter, visibility filter, etc.
+
+    return $select;
+}
+```
+
+The `WHERE entity_id > :lastId` is the whole trick. Everything else is Magento plumbing.
+
+## The fix, part two: PHP generators
+
+Keyset pagination fixes the database side. But if you load 70,000 products into PHP arrays in one go, you've just moved the problem.
+
+This is where `yield` earns its keep. A PHP generator lets a function act like an iterator — it hands back one batch at a time, pauses, and resumes on the next iteration. Batches can be garbage-collected between yields.
+
+```php
+private function getProductGenerator(int $storeId): Generator
+{
+    $lastId = 0;
+
+    while (true) {
+        $rows = $this->connection->fetchAll(
+            $this->buildProductSelect($storeId, $lastId)
+        );
+
+        if (empty($rows)) {
+            break;
+        }
+
+        $lastId = (int) end($rows)['entity_id'];
+
+        yield $rows;
+
+        if (count($rows) < 1000) {
+            break;
+        }
+    }
+}
+```
+
+The caller consumes it like any other iterable:
+
+```php
+foreach ($this->getProductGenerator($storeId) as $batch) {
+    foreach ($batch as $row) {
+        // process one product
+    }
+    // $batch is eligible for garbage collection here
+    // before the next batch is fetched
+}
+```
+
+Per-batch memory stays bounded — roughly 5–10 MB for 1,000 rows in my case. The database does constant-cost range scans. The caller never has to know how many products exist.
+
+## A caveat I see people skip
+
+The total memory your process uses _while building final output_ is not O(1). If you're accumulating results into a string or a big array across iterations, you're back to O(n) total — just with bounded peak per fetch.
+
+That was true for my llms.txt module at v1.0: per-batch memory was bounded, but the final assembled output string scaled with catalog size.
+
+The honest version:
+
+- **Database side:** genuinely constant-cost per page, regardless of page depth
+- **Per-batch PHP memory:** bounded
+- **Total memory through the full iteration:** still O(n) unless you also stream the output
+
+The first two are huge wins on their own. Don't oversell the third.
+
+## When to actually reach for this
+
+Keyset pagination is the right default for any iteration that:
+
+- Walks a large table start-to-finish
+- Runs in a background job, cron, or CLI (not a user-facing paginated list)
+- Uses a monotonic integer primary key (Magento's `entity_id` works)
+
+It's _not_ the right tool when:
+
+- You need random-access pages ("jump to page 50") — users expect OFFSET-style behaviour in storefront UIs
+- The sort isn't the primary key — sorting by price or name requires a different cursor strategy (combining the sort column with a tiebreaker on the PK)
+- The table is small enough that OFFSET cost is irrelevant
+
+Magento's own `Magento\Sitemap\Model\Sitemap` uses a similar stream-and-yield pattern when generating sitemaps for large catalogs. That was the reference implementation that convinced me this pattern was Magento-idiomatic, not a clever hack.
+
+## The one-line version
+
+Use `WHERE pk > :lastId ORDER BY pk ASC LIMIT n` instead of `OFFSET`, and `yield` your batches from a generator function. Your catalog walkers will stop slowing down as the catalog grows.
+
+Source for the module that uses this technique: [github.com/iamrobindhiman/magento2-module-llms-txt](https://github.com/iamrobindhiman/magento2-module-llms-txt).

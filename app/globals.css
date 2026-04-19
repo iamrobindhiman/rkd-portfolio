@@ -1,26 +1,274 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Playful Geometric — Design Tokens
+   ============================================================ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Light mode */
+  --background: #FFFDF5;
+  --foreground: #1E293B;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #8B5CF6;
+  --accent-foreground: #FFFFFF;
+  --secondary: #F472B6;
+  --tertiary: #FBBF24;
+  --quaternary: #34D399;
+  --border: #E2E8F0;
+  --input: #FFFFFF;
+  --card: #FFFFFF;
+  --ring: #8B5CF6;
+  --shadow-color: #1E293B;
+}
+
+[data-theme="dark"] {
+  --background: #0F172A;
+  --foreground: #F8FAFC;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --accent: #A78BFA;
+  --accent-foreground: #0F172A;
+  --secondary: #F9A8D4;
+  --tertiary: #FCD34D;
+  --quaternary: #6EE7B7;
+  --border: #334155;
+  --input: #1E293B;
+  --card: #1E293B;
+  --ring: #A78BFA;
+  --shadow-color: #F8FAFC;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-secondary: var(--secondary);
+  --color-tertiary: var(--tertiary);
+  --color-quaternary: var(--quaternary);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-card: var(--card);
+  --color-ring: var(--ring);
+  --color-shadow: var(--shadow-color);
+
+  --font-display: var(--font-outfit), system-ui, sans-serif;
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
+  --font-body: var(--font-jakarta), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(3deg); }
+  75% { transform: rotate(-3deg); }
 }
+
+@keyframes bounce-in {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 240ms ease, color 240ms ease;
 }
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--foreground);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+
+.shadow-pop-sm { box-shadow: 2px 2px 0 0 var(--shadow-color); }
+.shadow-pop    { box-shadow: 4px 4px 0 0 var(--shadow-color); }
+.shadow-pop-md { box-shadow: 6px 6px 0 0 var(--shadow-color); }
+.shadow-pop-lg { box-shadow: 8px 8px 0 0 var(--shadow-color); }
+
+.shadow-pop-accent    { box-shadow: 8px 8px 0 0 var(--accent); }
+.shadow-pop-secondary { box-shadow: 8px 8px 0 0 var(--secondary); }
+.shadow-pop-tertiary  { box-shadow: 8px 8px 0 0 var(--tertiary); }
+.shadow-pop-quaternary{ box-shadow: 8px 8px 0 0 var(--quaternary); }
+.shadow-pop-border    { box-shadow: 8px 8px 0 0 var(--border); }
+
+.bg-dot-grid {
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--foreground) 18%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Article (reading mode)
+   ============================================================ */
+
+.prose {
+  font-family: var(--font-body);
+  font-size: 19px;
+  line-height: 1.65;
+  color: var(--foreground);
+}
+
+@media (min-width: 768px) {
+  .prose { font-size: 20px; }
+}
+
+.prose > * + * { margin-top: 1.2em; }
+
+.prose h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.5rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-top: 0;
+}
+
+.prose h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.75rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  margin-top: 2.5em;
+  margin-bottom: 0.6em;
+  position: relative;
+}
+
+.prose h2::after {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 999px;
+  margin-top: 10px;
+}
+
+.prose h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  line-height: 1.3;
+  margin-top: 2em;
+  margin-bottom: 0.5em;
+}
+
+.prose p { margin-top: 1.2em; }
+.prose ul, .prose ol { padding-left: 1.3em; }
+.prose li + li { margin-top: 0.4em; }
+
+.prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in srgb, var(--accent) 50%, transparent);
+  transition: text-decoration-color 180ms ease;
+}
+
+.prose a:hover { text-decoration-color: var(--accent); }
+
+.prose strong { font-weight: 700; }
+
+.prose blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 20px;
+  margin-left: 0;
+  font-style: italic;
+}
+
+.prose code:not(pre code) {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--muted);
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.prose pre {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.6;
+  background: var(--muted) !important;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 1.2em 1.5em;
+  overflow-x: auto;
+  box-shadow: 4px 4px 0 0 var(--border);
+}
+
+.prose pre code {
+  font-family: inherit;
+  font-size: inherit;
+  background: none;
+  padding: 0;
+  border: none;
+}
+
+.prose figure { margin: 2em 0; }
+.prose figure img {
+  border: 2px solid var(--shadow-color);
+  border-radius: 8px;
+  box-shadow: 6px 6px 0 0 var(--secondary);
+}
+.prose figcaption {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--muted-foreground);
+  margin-top: 10px;
+  text-align: center;
+}
+
+.prose pre [data-line] { padding: 0 1rem; }

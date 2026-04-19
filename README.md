@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Robin Dhiman — Portfolio
 
-## Getting Started
+Personal portfolio + blog for Robin Dhiman (senior web engineer, e-commerce focus).
 
-First, run the development server:
+**Stack:** Next.js 16 · TypeScript · Tailwind CSS v4 · MDX · Shiki · next-themes
+
+**Design system:** Playful Geometric — warm cream base, violet/pink/amber/mint accents, hard "pop" shadows, sticker cards.
+
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Writing a blog post
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a new file at `content/blog/your-post-slug.mdx`
+2. Add frontmatter:
 
-## Learn More
+```mdx
+---
+title: "Your post title"
+description: "Short summary for SEO and the blog index."
+date: "2026-04-19"
+readTime: "6 min"
+tags: ["Magento 2", "PHP"]
+---
 
-To learn more about Next.js, take a look at the following resources:
+Your markdown here. Code fences with language get full syntax highlighting via Shiki at build time.
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Save. The post appears on `/blog` automatically and at `/blog/your-post-slug`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploying to Vercel
 
-## Deploy on Vercel
+1. Push this repo to GitHub: `gh repo create iamrobindhiman/portfolio --public --source=. --push`
+2. Go to [vercel.com/new](https://vercel.com/new), import the repo, deploy — no config needed.
+3. Add your custom domain in Vercel → Settings → Domains.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Set `metadataBase` in `app/layout.tsx` to your final production URL.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project layout
+
+```
+app/                    # App Router pages (home, blog index, [slug], sitemap, robots)
+components/
+  layout/               # Nav, Footer
+  ui/                   # PopButton, StickerCard
+  ThemeProvider.tsx     # next-themes wrapper
+  ThemeToggle.tsx       # Sun/Moon toggle
+content/blog/           # MDX blog posts
+lib/posts.ts            # MDX frontmatter reader
+app/globals.css         # Design tokens + .prose reading-mode styles
+```
+
+## Placeholders to replace
+
+- The bottom two work cards on the home page (headless rebuild, WooCommerce optimisation) are placeholder copy — replace with real case studies when ready.
+- `metadataBase` defaults to `https://rkd.dev` — update when you pick a real domain.
+- Contact email `hi@rkd.dev` throughout — replace with your preferred contact address.
+
+## License
+
+Content under `content/` © Robin Dhiman. Code under MIT.
