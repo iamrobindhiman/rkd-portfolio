@@ -86,8 +86,62 @@ img, svg { display: block; max-width: 100%; }
   .grid-rules > span {
     border-left: 1px solid color-mix(in oklab, var(--accent) 14%, transparent);
     height: 100%;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 500ms var(--ease);
   }
-  .grid-rules > span:first-child { border-left: none; }
+  .grid-rules > span:first-child { border-left: none; overflow: visible; }
+
+  /* scan segment — a short vertical gradient that travels top to bottom */
+  .grid-rules > span::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: -100px;
+    width: 1px;
+    height: 100px;
+    background: linear-gradient(180deg,
+      transparent 0%,
+      color-mix(in oklab, var(--accent) 60%, transparent) 40%,
+      var(--accent) 50%,
+      color-mix(in oklab, var(--accent) 60%, transparent) 60%,
+      transparent 100%);
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+
+  /* on hero hover, brighten lines + run the scan wave */
+  .hero:hover .grid-rules > span {
+    border-left-color: color-mix(in oklab, var(--accent) 35%, transparent);
+  }
+  .hero:hover .grid-rules > span::before {
+    animation: scan-down 2.6s cubic-bezier(0.3, 0.1, 0.3, 1) infinite;
+  }
+
+  /* staggered delays → wave left to right */
+  .hero:hover .grid-rules > span:nth-child(2)::before  { animation-delay: 0.07s; }
+  .hero:hover .grid-rules > span:nth-child(3)::before  { animation-delay: 0.14s; }
+  .hero:hover .grid-rules > span:nth-child(4)::before  { animation-delay: 0.21s; }
+  .hero:hover .grid-rules > span:nth-child(5)::before  { animation-delay: 0.28s; }
+  .hero:hover .grid-rules > span:nth-child(6)::before  { animation-delay: 0.35s; }
+  .hero:hover .grid-rules > span:nth-child(7)::before  { animation-delay: 0.42s; }
+  .hero:hover .grid-rules > span:nth-child(8)::before  { animation-delay: 0.49s; }
+  .hero:hover .grid-rules > span:nth-child(9)::before  { animation-delay: 0.56s; }
+  .hero:hover .grid-rules > span:nth-child(10)::before { animation-delay: 0.63s; }
+  .hero:hover .grid-rules > span:nth-child(11)::before { animation-delay: 0.70s; }
+  .hero:hover .grid-rules > span:nth-child(12)::before { animation-delay: 0.77s; }
+}
+
+@keyframes scan-down {
+  0%   { transform: translateY(0);       opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { transform: translateY(calc(100vh + 100px)); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero:hover .grid-rules > span::before { animation: none; opacity: 0; }
 }
 .hero > .page { position: relative; }
 .hero > .page > *:not(.grid-rules) { position: relative; z-index: 1; }
