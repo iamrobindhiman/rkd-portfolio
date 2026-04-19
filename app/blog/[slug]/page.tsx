@@ -37,29 +37,23 @@ export default async function PostPage({ params }: { params: Params }) {
   }
 
   return (
-    <article className="max-w-3xl mx-auto px-6 py-16 md:py-24">
-      <nav className="font-mono text-xs mb-10">
-        <Link href="/blog" className="text-[var(--muted-foreground)] hover:text-[var(--accent)]">
-          ← Writing
-        </Link>
-      </nav>
-
-      <header className="mb-12">
-        <div className="flex items-center gap-3 font-mono text-[11px] tracking-wider text-[var(--muted-foreground)] mb-4">
+    <article className="article">
+      <div className="narrow">
+        <nav className="breadcrumb">
+          <Link href="/blog">← Writing</Link>
+        </nav>
+        <h1>{meta.title}</h1>
+        <div className="byline">
           <span>{meta.date}</span>
           <span>·</span>
           <span>{meta.readTime}</span>
+          <span>·</span>
+          <span>Robin Dhiman</span>
         </div>
-        <h1 className="font-display font-extrabold text-3xl md:text-5xl leading-tight tracking-tight">
-          {meta.title}
-        </h1>
-        {meta.description && (
-          <p className="mt-6 text-lg text-[var(--muted-foreground)]">{meta.description}</p>
-        )}
-      </header>
 
-      <div className="prose">
-        <Post />
+        <div className="prose">
+          <Post />
+        </div>
       </div>
     </article>
   );
