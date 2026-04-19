@@ -114,7 +114,7 @@ img, svg { display: block; max-width: 100%; }
   aspect-ratio: 1 / 1;
   display: block;
   transition: transform 240ms var(--ease), box-shadow 240ms var(--ease);
-  box-shadow: 5px 5px 0 0 var(--accent);
+  box-shadow: 15px 15px 0 0 var(--accent);
   border: 1px solid var(--head);
   overflow: hidden;
   background: var(--surface);
@@ -128,8 +128,8 @@ img, svg { display: block; max-width: 100%; }
   filter: grayscale(100%) contrast(1.05);
 }
 .portrait:hover {
-  transform: translate(-3px, -3px);
-  box-shadow: 9px 9px 0 0 var(--accent);
+  transform: translate(-5px, -5px);
+  box-shadow: 20px 20px 0 0 var(--accent);
 }
 .portrait:hover img {
   transform: scale(1.04);
@@ -145,9 +145,27 @@ img, svg { display: block; max-width: 100%; }
 .nav-inner { max-width: var(--page-max); margin: 0 auto; padding: 18px var(--pad-x); display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .brand { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; color: var(--head); display: inline-flex; align-items: baseline; gap: 8px; }
 .brand .tag { font-family: var(--fm); font-weight: 400; font-size: 11px; color: var(--mute); }
-.nav-links { display: flex; gap: 28px; font-weight: 500; font-size: 14px; color: var(--body); }
-.nav-links a { padding: 4px 0; position: relative; transition: color 150ms var(--ease); }
-.nav-links a:hover { color: var(--accent); }
+.nav-links { display: flex; gap: 16px; font-weight: 500; font-size: 12px; color: var(--body); text-transform: uppercase; letter-spacing: 0.1em; }
+.nav-links a {
+  position: relative;
+  padding: 8px 12px;
+  transition: color 180ms var(--ease);
+  isolation: isolate;
+  z-index: 0;
+}
+.nav-links a::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform: skewX(-18deg) scaleX(0);
+  transform-origin: left center;
+  transition: transform 220ms var(--ease);
+  z-index: -1;
+}
+.nav-links a:hover { color: #fff; }
+.nav-links a:hover::before { transform: skewX(-18deg) scaleX(1); }
+[data-theme="dark"] .nav-links a:hover { color: #000; }
 .nav-right { display: flex; align-items: center; gap: 16px; }
 .theme-toggle { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--rule); border-radius: 2px; color: var(--body); transition: all 150ms var(--ease); }
 .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
