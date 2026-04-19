@@ -5,8 +5,9 @@ export default function Nav() {
   return (
     <header className="nav">
       <div className="nav-inner">
-        <Link href="/" className="brand">
-          Robin Dhiman<span className="tag">/ senior engineer</span>
+        <Link href="/" className="brand" aria-label="rkd — senior engineer">
+          <span className="brand-name">rkd<i className="brand-dot" aria-hidden /></span>
+          <span className="tag">/ senior engineer</span>
         </Link>
         <nav className="nav-right">
           <div className="nav-links">
