@@ -1,5 +1,5 @@
-@import "tailwindcss";
 @import url('https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,401,501&f[]=fragment-mono@400,401&display=swap');
+@import "tailwindcss";
 
 /* Robin Dhiman — portfolio 2026
    Swiss cold / high-contrast editorial.
