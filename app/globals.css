@@ -128,8 +128,8 @@ img, svg { display: block; max-width: 100%; }
   filter: grayscale(100%) contrast(1.05);
 }
 .portrait:hover {
-  transform: translate(-5px, -5px);
-  box-shadow: 20px 20px 0 0 var(--accent);
+  transform: translate(15px, 15px);
+  box-shadow: -15px -15px 0 0 var(--accent);
 }
 .portrait:hover img {
   transform: scale(1.04);
@@ -148,7 +148,7 @@ img, svg { display: block; max-width: 100%; }
 .nav-links { display: flex; gap: 16px; font-weight: 500; font-size: 12px; color: var(--body); text-transform: uppercase; letter-spacing: 0.1em; }
 .nav-links a {
   position: relative;
-  padding: 8px 12px;
+  padding: 4px 6px;
   transition: color 180ms var(--ease);
   isolation: isolate;
   z-index: 0;
@@ -158,13 +158,13 @@ img, svg { display: block; max-width: 100%; }
   position: absolute;
   inset: 0;
   background: var(--accent);
-  transform: skewX(-18deg) scaleX(0);
+  transform: scaleX(0);
   transform-origin: left center;
   transition: transform 220ms var(--ease);
   z-index: -1;
 }
 .nav-links a:hover { color: #fff; }
-.nav-links a:hover::before { transform: skewX(-18deg) scaleX(1); }
+.nav-links a:hover::before { transform: scaleX(1); }
 [data-theme="dark"] .nav-links a:hover { color: #000; }
 .nav-right { display: flex; align-items: center; gap: 16px; }
 .theme-toggle { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--rule); border-radius: 2px; color: var(--body); transition: all 150ms var(--ease); }
