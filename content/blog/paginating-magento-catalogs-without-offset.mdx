@@ -2,17 +2,17 @@
 title: "Paginating Magento catalogs without OFFSET"
 description: "Why setCurPage() dies at page 1000, and a small pattern that fixes it."
 date: "2026-04-19"
-readTime: "8 min"
+readTime: "6 min"
 tags: ["Magento 2", "PHP", "Performance"]
 ---
 
-There's a quiet performance cliff in Magento. Page 1 of your product listing loads in 10 ms. Page 1000 takes eight seconds. The code didn't change — just the page number.
+There is a hidden slowdown in Magento. Page 1 of your product listing loads in 10 ms. Page 1000 takes eight seconds. The code did not change — only the page number.
 
-I hit this while building a module that walks entire Magento catalogs to generate an [llms.txt](https://llmstxt.org/) file. On a 70,000-product store, the standard Magento collection approach took the generator from "fast enough" to "kernel-level slow" somewhere around page 40. This post is about the fix.
+I ran into this while building a module that reads every product in a Magento catalog to generate an [llms.txt](https://llmstxt.org/) file. On a store with 70,000 products, the standard Magento collection went from "fast enough" to unusably slow around page 40. This post is about the fix.
 
 ## The standard way, and why it breaks
 
-In Magento 2, if you want to iterate through all products, you usually reach for something like:
+In Magento 2, if you want to read every product, you usually write something like this:
 
 ```php
 $collection = $this->collectionFactory->create()
@@ -21,7 +21,7 @@ $collection = $this->collectionFactory->create()
     ->setCurPage($page);
 ```
 
-Under the hood, `setPageSize` and `setCurPage` translate to SQL's `LIMIT` and `OFFSET`:
+Under the hood, `setPageSize` and `setCurPage` turn into SQL `LIMIT` and `OFFSET`:
 
 ```sql
 SELECT * FROM catalog_product_entity
@@ -29,13 +29,13 @@ ORDER BY entity_id ASC
 LIMIT 1000 OFFSET 999000;
 ```
 
-MySQL reads this as: "start from row 1, scan and discard 999,000 rows, then give me the next 1,000." The database doesn't have a shortcut. It walks the index from the start every single time.
+MySQL reads this as: "start from row 1, skip 999,000 rows, then give me the next 1,000." The database has no shortcut. It walks the index from the start every single time.
 
-That's the cliff. At page 1, `OFFSET 0` is free. At page 1000, `OFFSET 999000` is 999,000 wasted row reads _per request_. The cost scales linearly with page depth — and compounds if the same query runs repeatedly.
+That is the slowdown. At page 1, `OFFSET 0` is free. At page 1000, `OFFSET 999000` is 999,000 wasted row reads _per request_. The cost grows with the page number — and adds up if the same query runs many times.
 
 ## The fix, part one: keyset pagination
 
-Instead of offsetting, use the index you already have — the primary key — as a cursor:
+Instead of using OFFSET, use the index you already have — the primary key — as a cursor:
 
 ```sql
 SELECT * FROM catalog_product_entity
@@ -44,13 +44,13 @@ ORDER BY entity_id ASC
 LIMIT 1000;
 ```
 
-This tells MySQL: "start from the row just after the one I saw last, give me the next 1,000." It's an index range scan — jumping directly to the right spot using the B-tree structure. The cost is the same whether `:lastId` is 0, 10,000, or 1,000,000.
+This tells MySQL: "start from the row right after the last one I saw, and give me the next 1,000." It is an index range scan — the database jumps straight to the right spot through the B-tree. The cost is the same whether `:lastId` is 0, 10,000, or 1,000,000.
 
-You pass the last `entity_id` you saw into the next query as `:lastId`. The cursor advances through the table without ever scanning-and-discarding.
+You pass the last `entity_id` you saw into the next query as `:lastId`. The cursor moves forward through the table without ever skipping rows.
 
-Sentry's engineering team measured a 17× speedup on their production tables switching from OFFSET to cursor pagination. I saw similar gains in Magento.
+Other teams have written about large speedups from this switch on production tables. The point is not the exact number — it is that the cost no longer grows with page depth.
 
-Implementation in the module:
+Here is what it looks like in the module:
 
 ```php
 private function buildProductSelect(int $storeId, int $lastId): Select
@@ -67,13 +67,13 @@ private function buildProductSelect(int $storeId, int $lastId): Select
 }
 ```
 
-The `WHERE entity_id > :lastId` is the whole trick. Everything else is Magento plumbing.
+The `WHERE entity_id > :lastId` is the whole trick. Everything else is standard Magento code.
 
 ## The fix, part two: PHP generators
 
-Keyset pagination fixes the database side. But if you load 70,000 products into PHP arrays in one go, you've just moved the problem.
+Keyset pagination solves the database side. But if you load 70,000 products into PHP arrays in one go, you have only moved the problem.
 
-This is where `yield` earns its keep. A PHP generator lets a function act like an iterator — it hands back one batch at a time, pauses, and resumes on the next iteration. Batches can be garbage-collected between yields.
+This is where `yield` helps. A PHP generator lets a function behave like an iterator — it hands back one batch at a time, pauses, and continues on the next call. Each batch can be freed from memory before the next one is fetched.
 
 ```php
 private function getProductGenerator(int $storeId): Generator
@@ -100,52 +100,56 @@ private function getProductGenerator(int $storeId): Generator
 }
 ```
 
-The caller consumes it like any other iterable:
+The caller reads it like any other iterable:
 
 ```php
 foreach ($this->getProductGenerator($storeId) as $batch) {
     foreach ($batch as $row) {
         // process one product
     }
-    // $batch is eligible for garbage collection here
+    // $batch can be freed from memory here
     // before the next batch is fetched
 }
 ```
 
-Per-batch memory stays bounded — roughly 5–10 MB for 1,000 rows in my case. The database does constant-cost range scans. The caller never has to know how many products exist.
+Memory per batch stays small — around 5–10 MB for 1,000 rows in my case. The database runs constant-cost range scans. The caller does not need to know how many products exist.
 
 ## A caveat I see people skip
 
-The total memory your process uses _while building final output_ is not O(1). If you're accumulating results into a string or a big array across iterations, you're back to O(n) total — just with bounded peak per fetch.
+The total memory your process uses _while building the final output_ is not constant. If you collect results into a string or a big array across loops, total memory grows with the catalog size — only the peak per fetch stays small.
 
-That was true for my llms.txt module at v1.0: per-batch memory was bounded, but the final assembled output string scaled with catalog size.
+That was true in my llms.txt module at v1.0: per-batch memory was bounded, but the final output string grew with the catalog size.
 
 The honest version:
 
-- **Database side:** genuinely constant-cost per page, regardless of page depth
-- **Per-batch PHP memory:** bounded
-- **Total memory through the full iteration:** still O(n) unless you also stream the output
+- **Database side:** truly constant cost per page, no matter the page depth
+- **Per-batch PHP memory:** small and bounded
+- **Total memory through the full loop:** still grows with catalog size, unless you also stream the output to disk
 
-The first two are huge wins on their own. Don't oversell the third.
+The first two are big wins on their own. Do not overstate the third.
 
-## When to actually reach for this
+## When to actually use this
 
-Keyset pagination is the right default for any iteration that:
+Keyset pagination is the right default for any loop that:
 
-- Walks a large table start-to-finish
-- Runs in a background job, cron, or CLI (not a user-facing paginated list)
-- Uses a monotonic integer primary key (Magento's `entity_id` works)
+- Reads a large table from start to finish
+- Runs in a background job, cron, or CLI — not a user-facing paginated list
+- Uses a number-based primary key that always goes up (Magento's `entity_id` works)
 
-It's _not_ the right tool when:
+It is _not_ the right tool when:
 
-- You need random-access pages ("jump to page 50") — users expect OFFSET-style behaviour in storefront UIs
-- The sort isn't the primary key — sorting by price or name requires a different cursor strategy (combining the sort column with a tiebreaker on the PK)
-- The table is small enough that OFFSET cost is irrelevant
-
-Magento's own `Magento\Sitemap\Model\Sitemap` uses a similar stream-and-yield pattern when generating sitemaps for large catalogs. That was the reference implementation that convinced me this pattern was Magento-idiomatic, not a clever hack.
+- You need random-access pages like "jump to page 50" — storefront UIs need OFFSET-style behaviour
+- The sort column is not the primary key — sorting by price or name needs a different cursor, combining the sort column with the primary key as a second sort key
+- The table is small enough that OFFSET cost does not matter
 
 ## The one-line version
 
-Use `WHERE pk > :lastId ORDER BY pk ASC LIMIT n` instead of `OFFSET`, and `yield` your batches from a generator function. Your catalog walkers will stop slowing down as the catalog grows.
+Use `WHERE pk > :lastId ORDER BY pk ASC LIMIT n` instead of `OFFSET`, and `yield` your batches from a generator function. Your catalog loops will stop slowing down as the catalog grows.
 
 Source for the module that uses this technique: [github.com/iamrobindhiman/magento2-module-llms-txt](https://github.com/iamrobindhiman/magento2-module-llms-txt).
+
+## Further reading
+
+- [PHP: Generators overview](https://www.php.net/manual/en/language.generators.overview.php) — the official PHP docs on `yield` and generator functions
+- [We need tool support for keyset pagination](https://use-the-index-luke.com/no-offset) by Markus Winand — the canonical argument against OFFSET, with SQL examples
+- [MySQL: Optimizing LIMIT queries](https://dev.mysql.com/doc/refman/8.0/en/limit-optimization.html) — how MySQL handles LIMIT and OFFSET internally
