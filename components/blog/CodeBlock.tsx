@@ -29,6 +29,11 @@ export default function CodeBlock(props: Props) {
   return (
     <div className="codeblock" data-language={lang}>
       <div className="codeblock-bar">
+        <span className="codeblock-dots" aria-hidden="true">
+          <span className="codeblock-dot codeblock-dot-red" />
+          <span className="codeblock-dot codeblock-dot-yellow" />
+          <span className="codeblock-dot codeblock-dot-green" />
+        </span>
         <span className="codeblock-lang">{showLang ? lang : "\u00A0"}</span>
         <button
           type="button"

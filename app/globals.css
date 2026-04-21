@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400&display=swap');
 @import url('https://api.fontshare.com/v2/css?f[]=switzer@400,500,600,700,401,501&f[]=fragment-mono@400,401&display=swap');
 @import "tailwindcss";
 
@@ -7,7 +8,9 @@
 
 :root {
   --f: 'Switzer', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --f-serif: 'Newsreader', 'Iowan Old Style', 'Charter', Georgia, serif;
   --fm: 'Fragment Mono', ui-monospace, Menlo, monospace;
+  --fm-code: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   --bg: #FFFFFF;
   --surface: #F4F4F4;
@@ -328,74 +331,108 @@ section.sec { padding: clamp(5rem, 11vw, 10rem) 0; border-top: 1px solid var(--r
 @media (max-width: 640px) { .article h1 { font-size: 2rem; } }
 .article .byline { font-family: var(--fm); font-size: 12px; color: var(--mute); margin-bottom: 40px; display: flex; gap: 14px; flex-wrap: wrap; }
 
-.prose { font-weight: 400; font-size: 19px; line-height: 1.6; color: var(--body); }
-@media (min-width: 768px) { .prose { font-size: 20px; } }
-.prose > * + * { margin-top: 1.15em; }
-.prose p { margin-bottom: 0; }
-.prose h2 { font-weight: 700; font-size: 1.6rem; line-height: 1.25; letter-spacing: -0.015em; margin: 2.5em 0 0.3em; color: var(--head); position: relative; }
+/* Blog body — Newsreader serif for long-form reading */
+.prose {
+  font-family: var(--f-serif);
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.75;
+  color: var(--body);
+  font-feature-settings: "onum" 1, "liga" 1, "dlig" 0;
+}
+@media (min-width: 768px) { .prose { font-size: 19px; } }
+.prose > * + * { margin-top: 1.3em; }
+.prose p { margin-bottom: 0; max-width: 65ch; }
+/* Headings stay in Switzer to keep brand link with nav/work cards */
+.prose h2 { font-family: var(--f); font-weight: 700; font-size: 1.55rem; line-height: 1.25; letter-spacing: -0.015em; margin: 2.2em 0 0.4em; color: var(--head); position: relative; }
 .prose h2::after { content: ''; display: block; width: 12px; height: 2px; background: var(--accent); margin-top: 8px; }
-.prose h3 { font-weight: 600; font-size: 1.2rem; line-height: 1.3; margin: 2em 0 0.5em; color: var(--head); }
-.prose ul, .prose ol { padding-left: 1.3em; margin: 1em 0 1.15em; }
-.prose li { margin-bottom: 0.4em; }
-.prose strong { font-weight: 700; color: var(--head); }
-.prose a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: color-mix(in oklab, var(--accent) 50%, transparent); transition: text-decoration-color 150ms var(--ease); }
+.prose h3 { font-family: var(--f); font-weight: 600; font-size: 1.2rem; line-height: 1.3; margin: 1.8em 0 0.4em; color: var(--head); letter-spacing: -0.01em; }
+.prose ul, .prose ol { padding-left: 1.3em; margin: 1em 0 1.2em; max-width: 65ch; }
+.prose li { margin-bottom: 0.45em; }
+.prose li > p { margin-top: 0.4em; }
+.prose strong { font-weight: 600; color: var(--head); }
+.prose em { font-style: italic; }
+.prose a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: color-mix(in oklab, var(--accent) 45%, transparent); transition: text-decoration-color 150ms var(--ease); }
 .prose a:hover { text-decoration-color: var(--accent); }
-.prose blockquote { border-left: 2px solid var(--accent); padding-left: 20px; margin: 1.6em 0; color: var(--head); font-weight: 500; }
-.prose code:not(pre code) { font-family: var(--fm); font-weight: 400; font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; border-radius: 3px; }
+.prose blockquote { border-left: 2px solid var(--accent); padding-left: 20px; margin: 1.6em 0; color: var(--head); font-style: italic; max-width: 65ch; }
+.prose code:not(pre code) { font-family: var(--fm-code); font-weight: 500; font-size: 0.86em; background: color-mix(in oklab, var(--accent) 8%, var(--bg)); color: var(--accent); padding: 2px 7px; border-radius: 3px; letter-spacing: -0.01em; }
 
-/* CODE BLOCKS — Shiki dual-theme + custom wrapper with copy/lang */
+/* CODE BLOCKS — editor-style: always dark Tokyo Night bg, window chrome, line numbers */
 .prose .codeblock {
-  margin: 1.6em 0;
-  border: 1px solid var(--rule);
-  border-radius: 4px;
+  --cb-bg: #1a1b26;           /* Tokyo Night Storm base */
+  --cb-bar: #16161e;          /* slightly darker header bar */
+  --cb-border: #2a2d3e;
+  --cb-line-num: #3b3f5c;
+  margin: 1.8em 0;
+  border: 1px solid var(--cb-border);
+  border-radius: 6px;
   overflow: hidden;
-  background: var(--code-bg);
+  background: var(--cb-bg);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+  max-width: none;
 }
 .prose .codeblock-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 14px;
-  border-bottom: 1px solid var(--rule);
-  background: color-mix(in oklab, var(--head) 3%, transparent);
+  gap: 14px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--cb-border);
+  background: var(--cb-bar);
 }
-[data-theme="dark"] .prose .codeblock-bar {
-  background: color-mix(in oklab, var(--head) 6%, transparent);
+.prose .codeblock-dots {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
 }
+.prose .codeblock-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.prose .codeblock-dot-red { background: #FF5F57; }
+.prose .codeblock-dot-yellow { background: #FEBC2E; }
+.prose .codeblock-dot-green { background: #28C840; }
 .prose .codeblock-lang {
-  font-family: var(--fm);
+  font-family: var(--fm-code);
   font-size: 11px;
-  color: var(--mute);
+  color: #7a7f9a;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
+  flex: 1;
+  text-align: center;
+  font-weight: 500;
 }
 .prose .codeblock-copy {
-  font-family: var(--fm);
+  font-family: var(--fm-code);
   font-size: 11px;
-  color: var(--mute);
+  color: #7a7f9a;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 4px 10px;
-  border: 1px solid var(--rule);
-  background: var(--bg);
-  border-radius: 2px;
+  border: 1px solid var(--cb-border);
+  background: transparent;
+  border-radius: 3px;
   cursor: pointer;
+  font-weight: 500;
   transition: color 150ms var(--ease), border-color 150ms var(--ease), background 150ms var(--ease);
 }
 .prose .codeblock-copy:hover {
-  color: var(--accent);
-  border-color: var(--accent);
+  color: #c0caf5;
+  border-color: #565f89;
+  background: rgba(255,255,255,0.03);
 }
 .prose .codeblock pre {
   background: transparent;
   margin: 0;
-  padding: 16px 18px;
+  padding: 18px 0;
   border: none;
   border-radius: 0;
   overflow-x: auto;
-  font-family: var(--fm);
+  font-family: var(--fm-code);
   font-size: 13.5px;
-  line-height: 1.65;
+  line-height: 1.7;
+  color: #c0caf5;
 }
 .prose .codeblock pre code {
   background: none;
@@ -404,25 +441,38 @@ section.sec { padding: clamp(5rem, 11vw, 10rem) 0; border-top: 1px solid var(--r
   border-radius: 0;
   font-family: inherit;
   display: grid;
+  counter-reset: codeline;
+  min-width: max-content;
 }
-/* Shiki dual-theme — map CSS variables to actual colors per theme */
-.prose .codeblock pre code [style*="--shiki-light"] {
-  color: var(--shiki-light);
+.prose .codeblock pre code > span[data-line] {
+  counter-increment: codeline;
+  padding-left: 3.5em;
+  padding-right: 1.2em;
+  position: relative;
 }
-[data-theme="dark"] .prose .codeblock pre code [style*="--shiki-dark"] {
-  color: var(--shiki-dark);
+.prose .codeblock pre code > span[data-line]::before {
+  content: counter(codeline);
+  position: absolute;
+  left: 0;
+  width: 2.5em;
+  text-align: right;
+  color: var(--cb-line-num);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  padding-right: 0.6em;
 }
-/* Fallback: bare <pre> outside the wrapper (defensive) */
+/* Fallback for bare <pre> (defensive) */
 .prose pre:not(.codeblock pre) {
-  background: var(--code-bg);
+  background: #1a1b26;
+  color: #c0caf5;
   padding: 16px 18px;
-  border-radius: 4px;
-  border: 1px solid var(--rule);
+  border-radius: 6px;
+  border: 1px solid #2a2d3e;
   overflow-x: auto;
   margin: 1.6em 0;
-  font-family: var(--fm);
+  font-family: var(--fm-code);
   font-size: 13.5px;
-  line-height: 1.65;
+  line-height: 1.7;
 }
 .prose figure { margin: 2em 0; }
 .prose figure img { border-radius: 2px; border: 1px solid var(--rule); }
