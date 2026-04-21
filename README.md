@@ -2,6 +2,8 @@
 
 Personal portfolio + blog for Robin Dhiman (senior web engineer, e-commerce focus).
 
+> **Personal repo.** Code is public for reference. This repository does not accept external contributions — Issues, Discussions, and Wiki are disabled, and Pull Requests will be closed without review (typo-fix exceptions occasionally welcome).
+
 **Stack:** Next.js 16 · TypeScript · Tailwind CSS v4 · MDX · Shiki · next-themes
 
 **Design system:** Playful Geometric — warm cream base, violet/pink/amber/mint accents, hard "pop" shadows, sticker cards.
