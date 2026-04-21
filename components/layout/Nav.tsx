@@ -1,12 +1,13 @@
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
+import BrandWordmark from "@/components/layout/BrandWordmark";
 
 export default function Nav() {
   return (
     <header className="nav">
       <div className="nav-inner">
-        <Link href="/" className="brand" aria-label="rkd — senior engineer">
-          <span className="brand-name">rkd<i className="brand-dot" aria-hidden /></span>
+        <Link href="/" className="brand" aria-label="Robin Dhiman — senior engineer">
+          <BrandWordmark />
           <span className="tag">senior engineer</span>
         </Link>
         <nav className="nav-right">
