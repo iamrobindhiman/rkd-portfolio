@@ -342,8 +342,88 @@ section.sec { padding: clamp(5rem, 11vw, 10rem) 0; border-top: 1px solid var(--r
 .prose a:hover { text-decoration-color: var(--accent); }
 .prose blockquote { border-left: 2px solid var(--accent); padding-left: 20px; margin: 1.6em 0; color: var(--head); font-weight: 500; }
 .prose code:not(pre code) { font-family: var(--fm); font-weight: 400; font-size: 0.9em; background: var(--code-bg); padding: 2px 6px; border-radius: 3px; }
-.prose pre { background: var(--code-bg) !important; padding: 1.2em 1.5em; border-radius: 3px; border: 1px solid var(--rule); overflow-x: auto; margin: 1.4em 0; font-family: var(--fm); font-size: 14.5px; line-height: 1.6; }
-.prose pre code { background: none; padding: 0; font-size: inherit; border-radius: 0; font-family: inherit; }
+
+/* CODE BLOCKS — Shiki dual-theme + custom wrapper with copy/lang */
+.prose .codeblock {
+  margin: 1.6em 0;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--code-bg);
+}
+.prose .codeblock-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--rule);
+  background: color-mix(in oklab, var(--head) 3%, transparent);
+}
+[data-theme="dark"] .prose .codeblock-bar {
+  background: color-mix(in oklab, var(--head) 6%, transparent);
+}
+.prose .codeblock-lang {
+  font-family: var(--fm);
+  font-size: 11px;
+  color: var(--mute);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.prose .codeblock-copy {
+  font-family: var(--fm);
+  font-size: 11px;
+  color: var(--mute);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border: 1px solid var(--rule);
+  background: var(--bg);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 150ms var(--ease), border-color 150ms var(--ease), background 150ms var(--ease);
+}
+.prose .codeblock-copy:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.prose .codeblock pre {
+  background: transparent;
+  margin: 0;
+  padding: 16px 18px;
+  border: none;
+  border-radius: 0;
+  overflow-x: auto;
+  font-family: var(--fm);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+.prose .codeblock pre code {
+  background: none;
+  padding: 0;
+  font-size: inherit;
+  border-radius: 0;
+  font-family: inherit;
+  display: grid;
+}
+/* Shiki dual-theme — map CSS variables to actual colors per theme */
+.prose .codeblock pre code [style*="--shiki-light"] {
+  color: var(--shiki-light);
+}
+[data-theme="dark"] .prose .codeblock pre code [style*="--shiki-dark"] {
+  color: var(--shiki-dark);
+}
+/* Fallback: bare <pre> outside the wrapper (defensive) */
+.prose pre:not(.codeblock pre) {
+  background: var(--code-bg);
+  padding: 16px 18px;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+  overflow-x: auto;
+  margin: 1.6em 0;
+  font-family: var(--fm);
+  font-size: 13.5px;
+  line-height: 1.65;
+}
 .prose figure { margin: 2em 0; }
 .prose figure img { border-radius: 2px; border: 1px solid var(--rule); }
 .prose figcaption { font-style: italic; font-weight: 400; font-size: 14px; color: var(--mute); margin-top: 10px; }

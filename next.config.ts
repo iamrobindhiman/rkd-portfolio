@@ -3,13 +3,18 @@ import createMDX from "@next/mdx";
 
 const withMDX = createMDX({
   options: {
-    remarkPlugins: [],
+    remarkPlugins: [
+      "remark-frontmatter",
+      ["remark-mdx-frontmatter", { name: "frontmatter" }],
+      "remark-gfm",
+    ],
     rehypePlugins: [
       [
         "rehype-pretty-code",
         {
           theme: { dark: "github-dark-dimmed", light: "github-light" },
           keepBackground: false,
+          defaultLang: "plaintext",
         },
       ],
     ],
