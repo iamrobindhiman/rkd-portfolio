@@ -7,7 +7,7 @@ export default function Nav() {
       <div className="nav-inner">
         <Link href="/" className="brand" aria-label="rkd — senior engineer">
           <span className="brand-name">rkd<i className="brand-dot" aria-hidden /></span>
-          <span className="tag">/ senior engineer</span>
+          <span className="tag">senior engineer</span>
         </Link>
         <nav className="nav-right">
           <div className="nav-links">

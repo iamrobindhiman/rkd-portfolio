@@ -1,6 +1,71 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getAllPosts } from "@/lib/posts";
+import { work, type WorkItem } from "@/lib/work";
+
+function WorkCard({ w }: { w: WorkItem }) {
+  const content = (
+    <>
+      <span className="wnum">{w.id}</span>
+      <div className="wbody">
+        <h3>{w.title}</h3>
+        <p>{w.blurb}</p>
+        <div className="stack">
+          {w.tags.map((t) => (
+            <span key={t}>{t}</span>
+          ))}
+        </div>
+      </div>
+      <div className="wmeta">
+        {w.year}
+        {w.category && ` · ${w.category}`}
+        {w.badge && <span className="ft">{w.badge}</span>}
+      </div>
+      {w.href && <span className="warr">↗</span>}
+    </>
+  );
+  if (w.href) {
+    return (
+      <Link
+        href={w.href}
+        className="work-item"
+        target={w.external ? "_blank" : undefined}
+        rel={w.external ? "noopener" : undefined}
+      >
+        {content}
+      </Link>
+    );
+  }
+  return <div className="work-item work-item--nolink">{content}</div>;
+}
+
+function SelectedRow({ w }: { w: WorkItem }) {
+  const content = (
+    <>
+      <span className="snum">{w.id}</span>
+      <div className="sbody">
+        <span className="stitle">{w.title}</span>
+        <span className="sblurb">{w.blurb}</span>
+      </div>
+      <span className="stags">{w.tags.join(" · ")}</span>
+      <span className="syear">{w.year}</span>
+      {w.href && <span className="sarr">↗</span>}
+    </>
+  );
+  if (w.href) {
+    return (
+      <Link
+        href={w.href}
+        className="selected-item"
+        target={w.external ? "_blank" : undefined}
+        rel={w.external ? "noopener" : undefined}
+      >
+        {content}
+      </Link>
+    );
+  }
+  return <div className="selected-item selected-item--nolink">{content}</div>;
+}
 
 export default function Home() {
   const recentPosts = getAllPosts().slice(0, 3);
@@ -28,7 +93,13 @@ export default function Home() {
             <div>
               <h1 className="display">
                 I build e&#8209;commerce<br />
-                backends<span className="accent">.</span><br />
+                <span className="word-swap" aria-label="backends and frontends">
+                  <span className="word-swap-track" aria-hidden="true">
+                    <span>backends</span>
+                    <span>frontends</span>
+                    <span>backends</span>
+                  </span>
+                </span><span className="accent">.</span><br />
                 Fifteen years in.
               </h1>
             </div>
@@ -52,7 +123,7 @@ export default function Home() {
             </div>
             <div>
               <h3>02 / Work</h3>
-              <p>Lead engineer on Magento 2 and Shopify builds for European merchants. Re-platforms, performance, Hyvä migrations.</p>
+              <p>Lead engineer on e-commerce builds. Magento 2 at the center, with Shopify, Laravel, and WordPress around it.</p>
             </div>
             <div>
               <h3>03 / Get in</h3>
@@ -78,12 +149,11 @@ export default function Home() {
 
           <div className="stack-table">
             {[
-              { num: "001", cat: "Commerce", items: <><span className="primary">Magento 2</span>, Shopify (theme + app), WooCommerce</> },
-              { num: "002", cat: "CMS", items: <>WordPress, headless content</> },
-              { num: "003", cat: "Frontend", items: <>React, Next.js, TypeScript, Hyvä</> },
-              { num: "004", cat: "Backend", items: <>PHP 8, Node, MySQL, Elasticsearch, Redis</> },
-              { num: "005", cat: "Infra", items: <>Docker, Nginx, GitHub Actions, Vercel</> },
-              { num: "006", cat: "Day-to-day", items: <>Code review, performance audits, mentoring</> },
+              { num: "001", cat: "Platforms", items: <><span className="primary">Magento 2</span>, Shopify, WordPress, Webflow</> },
+              { num: "002", cat: "Frontend", items: <>React, Next.js, TypeScript, Hyvä</> },
+              { num: "003", cat: "Backend", items: <>PHP 8, Laravel, MySQL, Elasticsearch, GraphQL, Redis</> },
+              { num: "004", cat: "Infra", items: <>Docker, Nginx, Fastly, Vercel, GitHub Actions</> },
+              { num: "005", cat: "Integrations", items: <>Klaviyo, Klevu, Stripe, Montonio/Esto, eBay/TradeMe APIs</> },
             ].map((r) => (
               <div className="stack-row" key={r.num}>
                 <span className="num">{r.num}</span>
@@ -102,51 +172,23 @@ export default function Home() {
               <span className="secnum">02 / Work</span>
               <h2>Selected projects.</h2>
             </div>
-            <p>Open-source modules and merchant work I&apos;m proud of. Case studies coming — for now, source and summaries only.</p>
+            <p>Open-source modules and client builds across Magento, WordPress, Shopify, and Webflow. Case studies coming — for now, source and summaries.</p>
           </div>
 
           <div className="work-list">
-            <Link href="https://github.com/iamrobindhiman/magento2-module-llms-txt" className="work-item" target="_blank" rel="noopener">
-              <span className="wnum">W-001</span>
-              <div className="wbody">
-                <h3>magento2-module-llms-txt</h3>
-                <p>Publishes a spec-compliant llms.txt and llms-full.txt for Magento 2 stores. Multi-store, multi-language, inventory-aware. Composer-installable, MIT.</p>
-                <div className="stack">
-                  <span>Magento 2</span><span>PHP 8</span><span>Composer</span>
-                </div>
-              </div>
-              <div className="wmeta">
-                2026 · open source
-                <span className="ft">Featured</span>
-              </div>
-              <span className="warr">↗</span>
-            </Link>
+            {work.filter((w) => w.featured).map((w) => (
+              <WorkCard key={w.id} w={w} />
+            ))}
+          </div>
 
-            <Link href="#" className="work-item">
-              <span className="wnum">W-002</span>
-              <div className="wbody">
-                <h3>Senior engineer — merchant work</h3>
-                <p>Lead engineer on Magento 2 and Shopify builds for European merchants. Re-platforms, performance work, Hyvä migrations.</p>
-                <div className="stack">
-                  <span>Magento 2</span><span>Shopify</span><span>Hyvä</span>
-                </div>
-              </div>
-              <div className="wmeta">2022 — present</div>
-              <span className="warr">↗</span>
-            </Link>
+          <div className="work-sub-head">
+            <h3>More work</h3>
+          </div>
 
-            <Link href="#" className="work-item">
-              <span className="wnum">W-003</span>
-              <div className="wbody">
-                <h3>[Case study placeholder]</h3>
-                <p>Headless storefront rebuild — Next.js on top of Magento GraphQL. Replace with a real write-up when ready.</p>
-                <div className="stack">
-                  <span>Next.js</span><span>GraphQL</span><span>Vercel</span>
-                </div>
-              </div>
-              <div className="wmeta">[year]</div>
-              <span className="warr">↗</span>
-            </Link>
+          <div className="selected-list">
+            {work.filter((w) => !w.featured).map((w) => (
+              <SelectedRow key={w.id} w={w} />
+            ))}
           </div>
         </div>
       </section>
@@ -204,7 +246,7 @@ export default function Home() {
             <div className="phil-item">
               <span className="phnum">Principle 03</span>
               <h3>Ship small things often.</h3>
-              <p>A small thing that does one thing well still finds users. The README usually takes longer to write than the code. That&apos;s fine — it&apos;s part of the job.</p>
+              <p>A small thing that does one thing well still finds users. Every release is a chance to learn what they actually want — a bigger release is a bigger guess.</p>
             </div>
           </div>
         </div>
@@ -221,6 +263,7 @@ export default function Home() {
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             <Link href="mailto:hello@robindhiman.dev" className="btn">Say hello →</Link>
             <Link href="https://github.com/iamrobindhiman" target="_blank" rel="noopener" className="btn ghost">GitHub</Link>
+            <Link href="https://www.linkedin.com/in/iamrobindhiman/" target="_blank" rel="noopener" className="btn ghost">LinkedIn</Link>
           </div>
         </div>
       </section>
