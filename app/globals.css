@@ -212,7 +212,7 @@ hr { border: none; border-top: 1px solid var(--rule); margin: 0; }
 
 section.sec { padding: clamp(5rem, 11vw, 10rem) 0; border-top: 1px solid var(--rule); }
 .sec-head { margin-bottom: 56px; display: grid; grid-template-columns: 1fr; gap: 0; }
-@media (min-width: 1024px) { .sec-head { grid-template-columns: 2fr 3fr; gap: 48px; align-items: baseline; } }
+@media (min-width: 1024px) { .sec-head { grid-template-columns: 2fr 3fr; gap: 48px; align-items: end; } }
 .sec-head h2 { font-weight: 700; font-size: clamp(1.75rem, 3.4vw, 2.75rem); line-height: 1.05; letter-spacing: -0.025em; }
 .sec-head p { color: var(--body); font-size: 1rem; max-width: 42em; }
 .sec-head .secnum { display: block; margin-bottom: 8px; }
