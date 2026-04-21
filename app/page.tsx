@@ -128,7 +128,7 @@ export default function Home() {
             <div>
               <h3>03 / Get in</h3>
               <p>
-                <Link href="mailto:hello@robindhiman.dev" className="acc">hello@robindhiman.dev</Link>
+                <Link href="mailto:hello@devrob.in" className="acc">hello@devrob.in</Link>
                 <br />
                 <Link href="https://github.com/iamrobindhiman" className="acc" target="_blank" rel="noopener">github / iamrobindhiman</Link>
               </p>
@@ -261,7 +261,7 @@ export default function Home() {
             Open-source contributions, e-commerce consulting, or just hello — I read everything that lands in my inbox.
           </p>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <Link href="mailto:hello@robindhiman.dev" className="btn">Say hello →</Link>
+            <Link href="mailto:hello@devrob.in" className="btn">Say hello →</Link>
             <Link href="https://github.com/iamrobindhiman" target="_blank" rel="noopener" className="btn ghost">GitHub</Link>
             <Link href="https://www.linkedin.com/in/iamrobindhiman/" target="_blank" rel="noopener" className="btn ghost">LinkedIn</Link>
           </div>

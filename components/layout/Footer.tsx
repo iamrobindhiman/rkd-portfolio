@@ -13,7 +13,7 @@ export default function Footer() {
           <ul>
             <li><Link href="https://github.com/iamrobindhiman" target="_blank" rel="noopener">github / iamrobindhiman</Link></li>
             <li><Link href="https://packagist.org/packages/rkd/module-llms-txt" target="_blank" rel="noopener">packagist / rkd</Link></li>
-            <li><Link href="mailto:hello@robindhiman.dev">hello@robindhiman.dev</Link></li>
+            <li><Link href="mailto:hello@devrob.in">hello@devrob.in</Link></li>
           </ul>
         </div>
         <div>
