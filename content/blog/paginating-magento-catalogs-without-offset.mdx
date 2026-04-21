@@ -6,9 +6,9 @@ readTime: "6 min"
 tags: ["Magento 2", "PHP", "Performance"]
 ---
 
-There is a hidden slowdown in Magento. Page 1 of your product listing loads in 10 ms. Page 1000 takes eight seconds. The code did not change — only the page number.
+I was building a module that reads every product in a Magento catalog to generate an [llms.txt](https://llmstxt.org/) file. On a store with 70,000 products, the standard Magento collection was fast at page 1 and unusably slow around page 40. The code did not change — only the page number.
 
-I ran into this while building a module that reads every product in a Magento catalog to generate an [llms.txt](https://llmstxt.org/) file. On a store with 70,000 products, the standard Magento collection went from "fast enough" to unusably slow around page 40. This post is about the fix.
+This is not specific to Magento. OFFSET pagination gets slower with page depth in every SQL database, and any ORM that exposes `LIMIT offset, n` inherits the same curve — Laravel, Django, Rails, Hibernate, all of them. `setPageSize()` and `setCurPage()` are the standard Magento 2 way to iterate a collection, so the pattern shows up a lot in Magento code. This post is about the fix.
 
 ## The standard way, and why it breaks
 
@@ -114,13 +114,11 @@ foreach ($this->getProductGenerator($storeId) as $batch) {
 
 Memory per batch stays small — around 5–10 MB for 1,000 rows in my case. The database runs constant-cost range scans. The caller does not need to know how many products exist.
 
-## A caveat I see people skip
+## One honest caveat
 
-The total memory your process uses _while building the final output_ is not constant. If you collect results into a string or a big array across loops, total memory grows with the catalog size — only the peak per fetch stays small.
+A generator keeps **per-batch** memory bounded. But if you collect results into a string or a big array across batches, **total** memory through the full loop still grows with catalog size — only the peak per fetch stays small.
 
-That was true in my llms.txt module at v1.0: per-batch memory was bounded, but the final output string grew with the catalog size.
-
-The honest version:
+So the full picture:
 
 - **Database side:** truly constant cost per page, no matter the page depth
 - **Per-batch PHP memory:** small and bounded
@@ -132,15 +130,15 @@ The first two are big wins on their own. Do not overstate the third.
 
 Keyset pagination is the right default for any loop that:
 
-- Reads a large table from start to finish
-- Runs in a background job, cron, or CLI — not a user-facing paginated list
-- Uses a number-based primary key that always goes up (Magento's `entity_id` works)
+- **Reads a large table from start to finish.** Catalog exports, data sync jobs, sitemap generation, search reindexing — anywhere the caller needs every row, not a slice.
+- **Runs in a background job, cron, or CLI.** The sequential nature of cursor pagination is fine when nothing downstream needs to jump to an arbitrary page.
+- **Uses a primary key that is a number and always goes up.** Magento's `entity_id` works this way — every new product gets a bigger ID than the last one, so `WHERE entity_id > :lastId` always moves forward without skipping or repeating rows.
 
 It is _not_ the right tool when:
 
-- You need random-access pages like "jump to page 50" — storefront UIs need OFFSET-style behaviour
-- The sort column is not the primary key — sorting by price or name needs a different cursor, combining the sort column with the primary key as a second sort key
-- The table is small enough that OFFSET cost does not matter
+- **You need to jump to an arbitrary page.** Keyset pagination is sequential — to load page 50 you need the cursor value from page 49. There is no way to compute "the row just after position 49,000" without walking there first. Storefront product listings where a user clicks "page 27" directly still need OFFSET.
+- **The sort column is not the primary key.** If users sort by price or name, duplicate values exist (two products at €9.99), so the cursor needs a deterministic tie-breaker. The `WHERE` clause becomes a pair: `WHERE (price, entity_id) > (:lastPrice, :lastId)`. It works and it is still fast, but the SQL is longer and the index needs to cover both columns in the right order.
+- **The table is small.** Under a few thousand rows, OFFSET cost is lost in the noise. Stick with the default collection — extra complexity is not worth it.
 
 ## The one-line version
 
