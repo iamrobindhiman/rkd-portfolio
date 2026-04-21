@@ -5,7 +5,7 @@ import Footer from "@/components/layout/Footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://rkd.dev"),
+  metadataBase: new URL("https://devrob.in"),
   title: {
     default: "Robin Dhiman — Senior web engineer",
     template: "%s · Robin Dhiman",
