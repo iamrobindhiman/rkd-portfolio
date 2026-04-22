@@ -72,7 +72,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 name: "Robin Dhiman",
                 url: "https://devrob.in",
                 image: "https://devrob.in/robin.jpg",
-                sameAs: ["https://github.com/iamrobindhiman"],
+                sameAs: [
+                  "https://github.com/iamrobindhiman",
+                  "https://www.linkedin.com/in/iamrobindhiman/",
+                  "https://x.com/IAmRobinDhiman",
+                ],
                 jobTitle: "Senior web engineer",
                 knowsAbout: ["Magento 2", "Hyvä", "PHP", "Next.js", "E-commerce"],
                 email: "mailto:hello@devrob.in",
