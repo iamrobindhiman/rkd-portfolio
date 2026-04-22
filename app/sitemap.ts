@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getAllPostSlugs } from "@/lib/posts";
 
-const BASE = "https://rkd.dev";
+const BASE = "https://devrob.in";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const posts = getAllPostSlugs().map((slug) => ({
