@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAllPostSlugs, getPostMeta } from "@/lib/posts";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 type Params = Promise<{ slug: string }>;
 
@@ -13,13 +14,24 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { slug } = await params;
   const meta = getPostMeta(slug);
   if (!meta) return { title: "Not found" };
+  const url = `https://devrob.in/blog/${slug}`;
   return {
     title: meta.title,
     description: meta.description,
+    alternates: { canonical: url },
     openGraph: {
+      type: "article",
+      url,
+      siteName: "Robin Dhiman",
       title: meta.title,
       description: meta.description,
-      type: "article",
+      publishedTime: meta.date,
+      authors: ["Robin Dhiman"],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: meta.title,
+      description: meta.description,
     },
   };
 }
@@ -36,8 +48,32 @@ export default async function PostPage({ params }: { params: Params }) {
     notFound();
   }
 
+  const postUrl = `https://devrob.in/blog/${slug}`;
+
   return (
     <article className="article">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: meta.title,
+          description: meta.description,
+          author: {
+            "@type": "Person",
+            "@id": "https://devrob.in/#person",
+            name: "Robin Dhiman",
+          },
+          datePublished: meta.date,
+          dateModified: meta.date,
+          image: `${postUrl}/opengraph-image`,
+          mainEntityOfPage: postUrl,
+          publisher: {
+            "@type": "Person",
+            "@id": "https://devrob.in/#person",
+            name: "Robin Dhiman",
+          },
+        }}
+      />
       <div className="narrow">
         <nav className="breadcrumb">
           <Link href="/blog">← Writing</Link>

@@ -5,6 +5,19 @@ import { getAllPosts } from "@/lib/posts";
 export const metadata: Metadata = {
   title: "Writing",
   description: "Notes from e-commerce engineering by Robin Dhiman.",
+  alternates: { canonical: "https://devrob.in/blog" },
+  openGraph: {
+    type: "website",
+    url: "https://devrob.in/blog",
+    siteName: "Robin Dhiman",
+    title: "Writing — Robin Dhiman",
+    description: "Notes from e-commerce engineering.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Writing — Robin Dhiman",
+    description: "Notes from e-commerce engineering.",
+  },
 };
 
 export default function BlogIndex() {
