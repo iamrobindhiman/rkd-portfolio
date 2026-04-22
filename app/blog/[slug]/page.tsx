@@ -10,6 +10,9 @@ export function generateStaticParams() {
   return getAllPostSlugs().map((slug) => ({ slug }));
 }
 
+const toIsoWithTz = (d: string): string =>
+  d.includes("T") ? d : `${d}T00:00:00+05:30`;
+
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
   const meta = getPostMeta(slug);
@@ -25,7 +28,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       siteName: "Robin Dhiman",
       title: meta.title,
       description: meta.description,
-      publishedTime: meta.date,
+      publishedTime: toIsoWithTz(meta.date),
       authors: ["Robin Dhiman"],
     },
     twitter: {
@@ -63,8 +66,8 @@ export default async function PostPage({ params }: { params: Params }) {
             "@id": "https://devrob.in/#person",
             name: "Robin Dhiman",
           },
-          datePublished: meta.date,
-          dateModified: meta.date,
+          datePublished: toIsoWithTz(meta.date),
+          dateModified: toIsoWithTz(meta.date),
           image: `${postUrl}/opengraph-image`,
           mainEntityOfPage: postUrl,
           publisher: {

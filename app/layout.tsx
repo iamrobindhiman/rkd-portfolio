@@ -34,15 +34,16 @@ export const metadata: Metadata = {
     type: "website",
     url: "https://devrob.in",
     siteName: "Robin Dhiman",
-    title: "Robin Dhiman — Senior web engineer",
+    title: "Robin Dhiman — Senior web engineer · Magento 2 · Next.js",
     description:
-      "Senior web engineer. Magento 2, Shopify, WordPress, Next.js. Shipping magento2-module-llms-txt.",
+      "Senior web engineer with fifteen years in Magento 2, Shopify, WordPress, and Next.js. Currently shipping magento2-module-llms-txt for AI discoverability.",
     locale: "en_US",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Robin Dhiman — Senior web engineer",
-    description: "Senior web engineer. Fifteen years. Magento 2, Shopify, Next.js.",
+    title: "Robin Dhiman — Senior web engineer · Magento 2 · Next.js",
+    description:
+      "Senior web engineer with fifteen years in Magento 2, Shopify, WordPress, and Next.js. Currently shipping magento2-module-llms-txt for AI discoverability.",
   },
   robots: {
     index: true,
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
+        <meta property="og:logo" content="https://devrob.in/logo" />
         <JsonLd
           data={{
             "@context": "https://schema.org",

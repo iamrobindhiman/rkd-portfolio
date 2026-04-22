@@ -4,19 +4,22 @@ import { getAllPosts } from "@/lib/posts";
 
 export const metadata: Metadata = {
   title: "Writing",
-  description: "Notes from e-commerce engineering by Robin Dhiman.",
+  description:
+    "Technical notes on e-commerce engineering — Magento 2, Hyvä, Next.js — by Robin Dhiman. Lessons from fifteen years of shipping production systems.",
   alternates: { canonical: "https://devrob.in/blog" },
   openGraph: {
     type: "website",
     url: "https://devrob.in/blog",
     siteName: "Robin Dhiman",
     title: "Writing — Robin Dhiman",
-    description: "Notes from e-commerce engineering.",
+    description:
+      "Technical notes on e-commerce engineering — Magento 2, Hyvä, Next.js — by Robin Dhiman. Lessons from fifteen years of shipping production systems.",
   },
   twitter: {
     card: "summary_large_image",
     title: "Writing — Robin Dhiman",
-    description: "Notes from e-commerce engineering.",
+    description:
+      "Technical notes on e-commerce engineering — Magento 2, Hyvä, Next.js — by Robin Dhiman. Lessons from fifteen years of shipping production systems.",
   },
 };
 
