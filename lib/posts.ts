@@ -42,3 +42,11 @@ export function getAllPosts(): PostMeta[] {
     .filter((p): p is PostMeta => p !== null)
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
+
+export function getPostBody(slug: string): string {
+  const file = path.join(CONTENT_DIR, `${slug}.mdx`);
+  if (!fs.existsSync(file)) return "";
+  const raw = fs.readFileSync(file, "utf8");
+  const { content } = matter(raw);
+  return content;
+}
