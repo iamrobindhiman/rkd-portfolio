@@ -1,0 +1,44 @@
+---
+# Template for a new blog post. Copy this file, rename from _TEMPLATE.mdx to
+# <kebab-case-slug>.mdx, fill in the fields, and delete these comments.
+# The validator (scripts/validate-content.mjs) runs on every npm run build.
+# Files starting with _ are ignored by lib/posts.ts and the validator.
+
+# Post title — keep under 60 chars for clean OG previews.
+title: ""
+
+# Description — 110-160 chars. Used as og:description, twitter:description,
+# the Article JSON-LD description, and the bullet in /llms.txt. First
+# sentence should name the problem; second the solution.
+description: ""
+
+# ISO date as a quoted string YYYY-MM-DD. Rendered with +05:30 (IST) offset
+# in JSON-LD. Also used to derive the _Last updated_ line in /llms.txt.
+date: "YYYY-MM-DD"
+
+# Approximate reading time, e.g. "6 min".
+readTime: ""
+
+# 2-4 topic tags. Must be a non-empty array.
+tags: []
+---
+
+[Hook paragraph: one concrete problem you hit, in plain language, without marketing.]
+
+[Second paragraph: the pattern that solves it, stated simply. Link out to any spec or canonical reference for the technique.]
+
+## First section heading
+
+Use ## for section headings. The post title is rendered as H1 by the template, so don't repeat it inside.
+
+```php
+// Code fences use the same rehype-pretty-code + Tokyo Night theme as other posts.
+```
+
+## When to use this / when not to
+
+- Bullet lists work well. Use bold-lead when each item has a trade-off.
+
+## Further reading
+
+- [External reference](https://example.com)
