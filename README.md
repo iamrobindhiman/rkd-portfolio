@@ -61,8 +61,6 @@ app/globals.css         # Design tokens + .prose reading-mode styles
 ## Placeholders to replace
 
 - The bottom two work cards on the home page (headless rebuild, WooCommerce optimisation) are placeholder copy — replace with real case studies when ready.
-- `metadataBase` defaults to `https://rkd.dev` — update when you pick a real domain.
-- Contact email `hi@rkd.dev` throughout — replace with your preferred contact address.
 
 ## License
 
