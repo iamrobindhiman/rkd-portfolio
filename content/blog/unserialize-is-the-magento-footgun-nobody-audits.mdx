@@ -1,10 +1,6 @@
 ---
 title: unserialize() is the Magento footgun nobody audits
-description: >-
-  Most Magento stores get compromised through a third-party extension, not core.
-  The recurring root cause is PHP object injection — unserialize() on
-  attacker-controlled data. Here's how it turns a cache extension into a remote
-  shell, and how to find it in your own vendor folder.
+description: "Most Magento compromises come through a third-party extension, not core: PHP object injection via unserialize(). Here's how it becomes a remote shell."
 date: '2026-06-12'
 readTime: 6 min
 tags:
