@@ -1,0 +1,74 @@
+---
+title: unserialize() is the Magento footgun nobody audits
+description: >-
+  Most Magento stores get compromised through a third-party extension, not core.
+  The recurring root cause is PHP object injection — unserialize() on
+  attacker-controlled data. Here's how it turns a cache extension into a remote
+  shell, and how to find it in your own vendor folder.
+date: '2026-06-12'
+readTime: 6 min
+tags:
+  - Magento 2
+  - PHP
+  - Security
+---
+Every few months the same Magento story runs again: a store is compromised, and it wasn't core. It was a third-party extension — usually something installed for *speed*, like a full-page-cache warmer or an import tool. The root cause underneath most of them is the same one PHP developers have been shipping by accident for fifteen years: object injection through `unserialize()`.
+
+It's worth understanding properly, because once you see the shape of it you'll spot it in code review in about three seconds.
+
+## How a string becomes a shell
+
+`unserialize()` doesn't just rebuild arrays and strings. It rebuilds *objects* — it will instantiate any class the calling code has access to and populate its properties, straight from the input string. If an attacker controls that string, they control which objects come into existence and what's inside them.
+
+On its own, a stray object is harmless. The danger is PHP's magic methods. When an object is destroyed, `__destruct()` runs. When it wakes from unserialisation, `__wakeup()` runs. In a codebase the size of Magento — core plus framework plus thirty extensions plus their dependencies — there is almost always *some* class whose `__destruct()` writes a file, or whose `__wakeup()` opens a connection, or that can be chained into something that does. Attackers call these gadget chains. They don't need your code to be careless; they need your code to be *large*, and to call `unserialize()` on something they can reach.
+
+So the whole exploit reduces to one question: is there a path where untrusted input — a cookie, a request parameter, a cache key, an imported file — reaches an `unserialize()` call?
+
+## Why Magento extensions are fertile ground
+
+Two reasons. First, history: Magento leaned on PHP serialization for years — cache entries, config, sessions — so reaching for `serialize()`/`unserialize()` is muscle memory for a lot of extension developers. Second, the install base: performance and cache extensions, by their nature, read and write serialized blobs constantly, and they run early in the request before much validation has happened. That's exactly the combination you don't want around a deserialization call.
+
+A minimal version of the bug looks this innocent:
+
+```php
+// Don't do this.
+$payload = $request->getCookie('warmer_state');
+$state   = unserialize($payload); // attacker controls $payload
+```
+
+No exotic mistake. Just `unserialize()` pointed at something a visitor can set.
+
+## The fix is boring, which is the point
+
+**Don't serialize untrusted data with PHP's serializer at all.** Use JSON. It only carries data — arrays, strings, numbers — never objects, so there are no magic methods to trigger:
+
+```php
+$state = json_decode($payload, true);
+```
+
+In Magento 2 specifically, that's exactly what `Magento\Framework\Serialize\Serializer\Json` is for. Inject `SerializerInterface` and let it do the work — Magento deprecated raw `serialize()`/`unserialize()` in core for this reason years ago.
+
+If you genuinely must unserialize PHP-native data, PHP 7+ lets you slam the door on objects:
+
+```php
+$state = unserialize($payload, ['allowed_classes' => false]);
+```
+
+That turns any embedded object into a `__PHP_Incomplete_Class` instead of instantiating it — no gadget chain, no `__destruct()` surprise. And if the payload crosses a trust boundary, sign it (HMAC) and verify before you even look at it.
+
+## Auditing your own store
+
+You can find most of this yourself in a minute:
+
+```bash
+grep -rn "unserialize(" vendor/ app/code/ \
+  | grep -v "allowed_classes"
+```
+
+Read every hit. For each one, ask the only question that matters: *can a user influence what reaches this call?* Start with extensions that touch caching, sessions, import/export, and anything that reads cookies — that's where the live ones hide.
+
+## The wider point
+
+None of this is really Magento's fault, and none of it is new. PHP object injection is a whole vulnerability class; Java has its own deserialization nightmare, Python has pickle, Ruby has its Marshal bugs. The lesson generalises cleanly: **deserialising attacker-controlled data into rich objects is remote code execution waiting for a gadget.** Treat any `unserialize()` (or `pickle.loads`, or `readObject`) on untrusted input as a live wire.
+
+For Magento specifically, the uncomfortable part is that the dangerous code usually isn't yours. It rides in on an extension you installed to make the store *faster*. Your perfectly tuned cache layer is worth nothing if it hands an attacker a shell — so the next time you `composer require` a performance module, grep it before you trust it.
