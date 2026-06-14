@@ -1,0 +1,48 @@
+---
+title: Is your Magento store legible to AI assistants?
+description: >-
+  AI assistants are becoming a product-discovery channel. Shopify ships native
+  tooling for it; Magento ships nothing. Here are the four layers that decide
+date: '2026-06-12'
+readTime: 7 min
+tags:
+  - Magento 2
+  - AI
+  - E-commerce
+  - SEO
+---
+Ask ChatGPT or Claude for "a waterproof hiking watch with a barometer under 200" and you don't get ten blue links. You get a shortlist, with reasons. For a growing slice of shoppers, that shortlist *is* the storefront. They never reach a category page. Which raises an uncomfortable question for anyone running a catalog: when an assistant builds that list, is your store on it?
+
+On Shopify, answering that is increasingly the platform's job. Shopify now ships an Agentic Storefronts page in the admin that feeds your catalog into AI channels like ChatGPT and Copilot, then reports which queries you surface for. You can argue about how well it works, but it's native: a toggle. On Magento there is no toggle. If you want a Magento store to be legible to an AI assistant, that's on you to build.
+
+I spent the last few months building exactly that: a module that exposes a Magento catalog to AI crawlers and assistants. The work sorts cleanly into four layers. None of them are exotic. Most stores are missing all four.
+
+## Layer 1: Let the crawlers in, deliberately
+
+AI assistants are fed two ways: live retrieval at question time, and index crawls ahead of time. Both arrive as bots with their own user agents: GPTBot (OpenAI), ClaudeBot (Anthropic), Google-Extended, PerplexityBot, and a growing list.
+
+Magento doesn't ship an opinion about any of them. Your `robots.txt` was written for Googlebot in a world that no longer exists. Step one is a decision, not code: which assistants are you willing to be read by, and have you actually said so? The mistake I see most is stores that block everything non-Google by reflex, then wonder why they're absent from AI answers.
+
+## Layer 2: Give them machine-readable facts
+
+A human reads "Was 180, now 140." A model inferring price, currency, and availability from rendered HTML gets it wrong often enough to drop you from a comparison.
+
+This is where `schema.org` Product structured data earns its keep: JSON-LD with `price`, `priceCurrency`, `availability`, `gtin`, `brand`. Magento emits *some* structured data, but coverage is partial and theme-dependent. Hyvä, Luma, and every custom frontend handle it differently. The fix is unglamorous: audit what your product pages actually output as JSON-LD, and fill the gaps. Structured data was an SEO nicety for a decade. For machine readers it's the difference between a fact and a guess.
+
+## Layer 3: Publish a map: llms.txt
+
+[llms.txt](https://llmstxt.org/) is a proposed convention: a single Markdown file at your domain root that tells an assistant, in plain prose, what lives here and where the canonical version is. Think of it as a `robots.txt` written for comprehension instead of permission.
+
+I'm deliberately measured about this one. Adoption is early, no assistant *guarantees* it reads your file, and anyone selling it as a ranking trick is overselling. But the cost is low and the logic is sound: when a model chooses what to retrieve, a clean Markdown summary of your catalog is far cheaper to parse than crawling a few thousand JavaScript-heavy product pages. You're doing the model's summarising for it, in your own words.
+
+## Layer 4: Scale (and why Magento makes it hard)
+
+Here it stops being a checklist and becomes engineering. A real catalog is 20k, 70k, 200k products. You can't dump all of it into one file, and you can't generate it by walking the catalog with naive `setCurPage()` pagination. That approach quietly falls off a performance cliff at depth. Generating an llms.txt or a machine feed for a large Magento store means keyset iteration, real curation (your best sellers and category structure, not every SKU), and incremental regeneration so you're not rebuilding everything on each cron tick.
+
+That's the real reason this layer is missing from most stores: layers 1–3 are configuration, but layer 4 is a module someone has to write and keep correct as the catalog moves.
+
+## The honest summary
+
+This is early. The standards aren't settled, the assistants change behaviour monthly, and nobody can promise you a number. So don't treat AI discoverability as a growth hack; treat it as cheap table stakes you can get ahead of.
+
+The platforms are already drawing the line. Shopify is making catalog-to-AI a built-in feature. Magento, true to form, hands you the primitives and a clean architecture and expects you to assemble the rest. That's annoying. It's also the opening. The Magento stores legible to assistants in 2026 won't be the ones that waited for a toggle. They'll be the ones whose team treated it as four small problems and shipped them.
