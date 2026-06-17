@@ -1,0 +1,71 @@
+---
+title: Which Magento extension is slowing you down? Stop guessing.
+description: >-
+  How to measure the real cost of each third-party extension in Magento 2 —
+  interceptors, observers, layout, and queries — instead of disabling modules
+  one by
+date: '2026-06-12'
+readTime: 7 min
+tags:
+  - Magento 2
+  - Performance
+  - PHP
+---
+A store feels slow. Someone has installed forty extensions over three years. The usual advice is "disable them one at a time and see what helps." That is not debugging. That is guessing with extra steps, on production, with a fingers-crossed deploy at the end.
+
+You can do better. Magento 2 makes the cost of an extension measurable if you know where it spends your time. Here is how I find the culprit instead of guessing.
+
+## Where an extension actually costs you
+
+A third-party module doesn't just "add features." On every request it can add work in four places:
+
+- **Plugins (interceptors).** Every `<plugin>` in a module's `di.xml` wraps a method. Magento compiles these into interceptor classes, and at runtime each one is a layer the call passes through: before, around, after. A module with twenty plugins on hot paths is twenty extra layers on requests that fire constantly.
+- **Observers.** Each `<observer>` in `events.xml` runs when its event dispatches. Subscribe to something like `controller_action_predispatch` and your code runs on every single page.
+- **Layout.** Layout XML is merged on page render. Blocks that a module injects into shared containers run their templates whether or not anyone looks at them.
+- **Queries.** The quiet one. A block or observer that does "just one more lookup" per item turns into N more queries on a category page.
+
+None of these are evil. They are how Magento is meant to be extended. The problem is volume and placement. Twenty cheap things on a page that renders a million times a day is not cheap.
+
+## Step 1: turn on the profiler
+
+Magento ships with a built-in profiler. Enable it:
+
+```
+bin/magento dev:profiler:enable
+```
+
+Set the output you want (the `html` profiler is the readable one) and load a slow page. You get a timing tree of the request: which methods ran, how long they took, how many times they were called. The "called N times" column is where extension problems hide. A method that runs once is fine; the same method at 1,400 calls is a loop someone didn't notice.
+
+For anything serious, reach for a real profiler. Blackfire or Xdebug locally, New Relic or another APM in production. Blackfire in particular gives you a call graph where you can see time attributed to a vendor namespace at a glance. That namespace is your answer.
+
+## Step 2: count what's actually attached
+
+Before you profile, it helps to know what each module wires up. No tool needed. Just `grep` the vendor tree:
+
+```
+# plugins declared across all modules
+grep -rl "<plugin" vendor/*/module-*/etc/ app/code/*/*/etc/
+
+# observers
+grep -rl "<observer" vendor/*/module-*/etc/ app/code/*/*/etc/
+```
+
+Then read the offenders. A plugin on a repository's `save` is usually fine. A plugin `around` a method on `Magento\Framework\View\Element\Template` or on the product collection load is a flag. Those paths run constantly, and an `around` plugin that forgets to call `$proceed()` correctly can quietly break or slow the whole chain.
+
+## Step 3: confirm with a controlled measurement
+
+Now you measure, not guess. Pick one suspect module. With the profiler on, capture the timing of a representative page. Disable that one module (`bin/magento module:disable`, recompile, cache flush), capture the same page again. The delta is that module's real cost on that page: attributable, repeatable, defensible.
+
+This is still "disable a module," but it is the opposite of the shotgun approach: you disable the one the data pointed at, you measure both sides, and you can put a number on the result instead of a vibe.
+
+## What to do with the answer
+
+Once you know which module and which mechanism, you usually have three options, in order of preference:
+
+1. **Configure it out of the hot path.** Many modules attach to broad events or all pages when they only need one. A setting, or a small di.xml override scoping their plugin to the right area, fixes it without touching their code.
+2. **Replace the mechanism.** An `around` plugin doing work that a `before` or `after` could do, or an observer that should have been a plugin, can often be reworked in a thin module of your own.
+3. **Drop it.** If a module costs more than the feature is worth, and once you've measured you can actually make that call, remove it.
+
+## The point
+
+"It got slow after we added extensions" is true on almost every long-lived Magento store. The mistake is treating the fix as folklore. The cost of every plugin, observer, layout handle, and query is observable. Turn on the profiler, read what's attached, measure one module at a time, and you trade a week of guessing for an afternoon of evidence.
