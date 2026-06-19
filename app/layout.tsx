@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import Nav from "@/components/layout/Nav";
 import Footer from "@/components/layout/Footer";
 import { JsonLd } from "@/components/seo/JsonLd";
+import CommandPalette from "@/components/search/CommandPalette";
+import { getSearchIndex } from "@/lib/searchIndex";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -96,6 +98,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Nav />
           <main>{children}</main>
           <Footer />
+          <CommandPalette items={getSearchIndex()} />
         </ThemeProvider>
         <Analytics />
         <SpeedInsights />

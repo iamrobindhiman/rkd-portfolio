@@ -554,3 +554,34 @@ section.sec { padding: clamp(5rem, 11vw, 10rem) 0; border-top: 1px solid var(--r
 .rd-footer { border-top: 1px solid var(--rule); margin-top: 8px; }
 .rd-footer-inner { max-width: var(--page-max); margin: 0 auto; padding: 26px var(--pad-x); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-family: var(--fm); font-size: 11px; color: var(--mute); letter-spacing: .06em; text-transform: uppercase; }
 .rd-footer-inner a { color: var(--mute); text-decoration: none; } .rd-footer-inner a:hover { color: var(--accent); }
+/* writing index */
+.rd-chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 32px 0 8px; }
+.rd-chip { font-family: var(--fm); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--mute); background: none; border: 1px solid var(--rd-glass-bd); padding: 7px 13px; border-radius: 100px; cursor: pointer; transition: border-color .2s, color .2s; }
+.rd-chip:hover, .rd-chip.is-on { border-color: var(--accent); color: var(--accent); }
+.rd-index { margin-top: 14px; }
+.rd-row { display: grid; grid-template-columns: 130px 1fr 28px; gap: 24px; align-items: start; text-decoration: none; color: var(--body); padding: 24px 16px; border-top: 1px solid var(--rule); border-radius: var(--rd-rad); transition: background .2s var(--ease); }
+.rd-row:last-child { border-bottom: 1px solid var(--rule); }
+.rd-row:hover { background: var(--rd-glass-bg); }
+.rd-row:hover .rd-row-title { color: var(--accent); }
+.rd-row:hover .rd-row-arr { transform: translate(3px,-3px); color: var(--accent); }
+.rd-row-date { font-family: var(--fm); font-size: 12px; color: var(--mute); line-height: 1.7; }
+.rd-row-date span { display: block; font-size: 10px; opacity: .8; }
+.rd-row-title { font-weight: 400; font-size: 22px; letter-spacing: -.02em; color: var(--head); line-height: 1.25; transition: color .2s; }
+.rd-row-sub { font-size: 14px; color: var(--mute); line-height: 1.5; margin: 8px 0 12px; max-width: 60ch; }
+.rd-row-tags { font-family: var(--fm); font-size: 11px; color: var(--mute); }
+.rd-row-arr { font-size: 14px; color: var(--mute); transition: transform .25s var(--ease), color .2s; }
+.rd-index-empty { font-family: var(--fm); font-size: 13px; color: var(--mute); padding: 24px 0; }
+@media (max-width: 560px){ .rd-row { grid-template-columns: 1fr 24px; } .rd-row-date { grid-column: 1 / -1; display: flex; gap: 10px; } .rd-row-date span { display: inline; } }
+/* command palette (⌘K) */
+.rd-cmd-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.45); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); display: flex; align-items: flex-start; justify-content: center; padding-top: 14vh; }
+.rd-cmd { width: min(620px, 92vw); background: var(--bg); border: 1px solid var(--rd-glass-bd); border-radius: var(--rd-rad); box-shadow: 0 20px 60px rgba(0,0,0,.5); overflow: hidden; }
+.rd-cmd-input { display: flex; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--rule); }
+.rd-cmd-prompt { font-family: var(--fm); font-size: 13px; color: var(--accent); white-space: nowrap; }
+.rd-cmd-input input { flex: 1; background: none; border: none; outline: none; color: var(--head); font-family: var(--f); font-size: 16px; }
+.rd-cmd-list { list-style: none; max-height: 50vh; overflow-y: auto; }
+.rd-cmd-item { display: flex; align-items: center; justify-content: space-between; padding: 13px 20px; cursor: pointer; }
+.rd-cmd-item.is-active { background: var(--rd-glass-bg); }
+.rd-cmd-label { font-size: 15px; color: var(--head); }
+.rd-cmd-kind { font-family: var(--fm); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--mute); border: 1px solid var(--rule); padding: 3px 8px; border-radius: 100px; }
+.rd-cmd-empty { padding: 18px 20px; font-family: var(--fm); font-size: 13px; color: var(--mute); }
+.rd-cmd-foot { display: flex; gap: 16px; padding: 12px 20px; border-top: 1px solid var(--rule); font-family: var(--fm); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--mute); }

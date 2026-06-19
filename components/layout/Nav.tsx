@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
+import SearchTrigger from "@/components/search/SearchTrigger";
 
 export default function Nav() {
   return (
@@ -12,6 +13,7 @@ export default function Nav() {
           <Link className="rd-navlink" href="/blog">Writing</Link>
           <Link className="rd-navlink" href="/work">Work</Link>
           <Link className="rd-navlink" href="/about">About</Link>
+          <SearchTrigger />
           <ThemeToggle />
         </nav>
       </div>
