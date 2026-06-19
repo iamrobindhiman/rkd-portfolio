@@ -333,7 +333,7 @@ section.sec { padding: clamp(5rem, 11vw, 10rem) 0; border-top: 1px solid var(--r
 
 /* Blog body — Newsreader serif for long-form reading */
 .prose {
-  font-family: var(--f-serif);
+  font-family: var(--f);
   font-weight: 400;
   font-size: 18px;
   line-height: 1.75;
