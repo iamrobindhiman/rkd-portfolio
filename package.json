@@ -8,7 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "validate:content": "node scripts/validate-content.mjs",
+    "seo:check": "node scripts/seo-preservation-check.mjs",
     "indexnow": "node scripts/indexnow-submit.mjs"
   },
   "dependencies": {
