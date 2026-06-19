@@ -585,3 +585,20 @@ section.sec { padding: clamp(5rem, 11vw, 10rem) 0; border-top: 1px solid var(--r
 .rd-cmd-kind { font-family: var(--fm); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--mute); border: 1px solid var(--rule); padding: 3px 8px; border-radius: 100px; }
 .rd-cmd-empty { padding: 18px 20px; font-family: var(--fm); font-size: 13px; color: var(--mute); }
 .rd-cmd-foot { display: flex; gap: 16px; padding: 12px 20px; border-top: 1px solid var(--rule); font-family: var(--fm); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--mute); }
+/* article page */
+.rd-article { max-width: 1000px; margin: 0 auto; padding: 28px var(--pad-x) 80px; display: grid; grid-template-columns: minmax(0,1fr) 200px; gap: 56px; align-items: start; }
+.rd-article-main { min-width: 0; }
+.rd-article-back { font-family: var(--fm); font-size: 12px; color: var(--mute); text-decoration: none; }
+.rd-article-back:hover { color: var(--accent); }
+.rd-article-title { font-weight: 300; font-size: clamp(30px, 4vw, 44px); line-height: 1.08; letter-spacing: -.03em; color: var(--head); margin: 12px 0 0; }
+.rd-article-byline { font-family: var(--fm); font-size: 12px; color: var(--mute); margin: 18px 0 6px; }
+.rd-article-nav { display: flex; justify-content: space-between; gap: 20px; border-top: 1px solid var(--rule); margin-top: 56px; padding-top: 24px; font-family: var(--fm); font-size: 12px; }
+.rd-article-nav a { color: var(--mute); text-decoration: none; max-width: 46%; line-height: 1.4; }
+.rd-article-nav a:hover { color: var(--accent); }
+.rd-toc { position: sticky; top: 88px; }
+.rd-toc ul { list-style: none; margin-top: 10px; border-left: 1px solid var(--rule); }
+.rd-toc-item a { display: block; font-size: 12.5px; color: var(--mute); text-decoration: none; padding: 5px 0 5px 14px; border-left: 1px solid transparent; margin-left: -1px; line-height: 1.4; transition: color .15s, border-color .15s; }
+.rd-toc-item.is-sub a { padding-left: 26px; font-size: 12px; }
+.rd-toc-item a:hover { color: var(--body); }
+.rd-toc-item.is-active a { color: var(--accent); border-left-color: var(--accent); }
+@media (max-width: 900px){ .rd-article { grid-template-columns: 1fr; gap: 0; } .rd-article-toc { display: none; } }
