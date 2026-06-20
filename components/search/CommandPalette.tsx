@@ -10,6 +10,7 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
   const [q, setQ] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   const results = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -38,11 +39,21 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
     };
   }, []);
 
-  // Focus the input when the palette opens (no state writes here).
+  // While open: remember the trigger, make the rest of the page inert (so a
+  // screen reader / keyboard user can't reach background content), focus the
+  // input, and on close restore focus + un-inert. This makes the overlay a real
+  // modal dialog per the accessibility review.
   useEffect(() => {
     if (!open) return;
+    triggerRef.current = (document.activeElement as HTMLElement) ?? null;
+    const bg = Array.from(document.querySelectorAll<HTMLElement>("header, main, footer"));
+    bg.forEach((el) => el.setAttribute("inert", ""));
     const t = setTimeout(() => inputRef.current?.focus(), 10);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+      bg.forEach((el) => el.removeAttribute("inert"));
+      triggerRef.current?.focus?.();
+    };
   }, [open]);
 
   function close() { setOpen(false); setQ(""); setActive(0); }
@@ -59,11 +70,25 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
     else if (e.key === "Enter") { e.preventDefault(); if (results[active]) go(results[active]); }
   }
 
+  // The input is the only focusable control; trap Tab so focus can't leave the
+  // dialog into the (inert) background.
+  function onTrapKey(e: React.KeyboardEvent) {
+    if (e.key === "Tab") { e.preventDefault(); inputRef.current?.focus(); }
+  }
+
   if (!open) return null;
 
+  const activeId = results[active] ? `rd-cmd-opt-${active}` : undefined;
+
   return (
-    <div className="rd-cmd-overlay" onClick={close} role="dialog" aria-modal="true" aria-label="Search">
-      <div className="rd-cmd" onClick={(e) => e.stopPropagation()}>
+    <div className="rd-cmd-overlay" onClick={close} onKeyDown={onTrapKey}>
+      <div
+        className="rd-cmd"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Site search"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="rd-cmd-input">
           <span className="rd-cmd-prompt" aria-hidden>→ /search:</span>
           <input
@@ -73,13 +98,21 @@ export default function CommandPalette({ items }: { items: SearchItem[] }) {
             onKeyDown={onInputKey}
             placeholder="Find a post, project, or page…"
             aria-label="Search posts, projects and pages"
+            role="combobox"
+            aria-expanded="true"
+            aria-controls="rd-cmd-list"
+            aria-activedescendant={activeId}
+            autoComplete="off"
           />
         </div>
-        <ul className="rd-cmd-list">
-          {results.length === 0 && <li className="rd-cmd-empty">No matches.</li>}
+        <ul className="rd-cmd-list" id="rd-cmd-list" role="listbox" aria-label="Search results">
+          {results.length === 0 && <li className="rd-cmd-empty" role="option" aria-selected={false}>No matches.</li>}
           {results.map((item, i) => (
             <li
               key={item.href + item.label}
+              id={`rd-cmd-opt-${i}`}
+              role="option"
+              aria-selected={i === active}
               className={"rd-cmd-item" + (i === active ? " is-active" : "")}
               onMouseEnter={() => setActive(i)}
               onClick={() => go(item)}

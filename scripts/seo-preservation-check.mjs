@@ -46,6 +46,8 @@ async function check200(path) {
 console.log(`[seo-check] base=${BASE}  posts=${slugs.length}`);
 await checkPage("/", { jsonLdTypes: ["Person", "WebSite"] });
 await checkPage("/blog");
+await checkPage("/work");
+await checkPage("/about");
 if (slugs[0]) await checkPage(`/blog/${slugs[0]}`, { jsonLdTypes: ["Article"], needArticle: true });
 for (const p of ["/sitemap.xml", "/robots.txt", "/llms.txt", "/llms-full.txt"]) await check200(p);
 

@@ -7,6 +7,11 @@ import ArticleToc from "@/components/blog/ArticleToc";
 
 type Params = Promise<{ slug: string }>;
 
+// Only known slugs render; any other /blog/<x> 404s at the framework boundary
+// instead of rendering on demand (closes the per-request fs/import surface the
+// security review flagged).
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return getAllPostSlugs().map((slug) => ({ slug }));
 }
