@@ -1,4 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <title>RKD</title>
-  <rect width="20" height="20" x="6" y="6" fill="#0032FF"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <title>devrob.in</title>
+  <rect width="120" height="120" rx="26" fill="#0032FF"/>
+  <g transform="translate(0,2)" fill="#ffffff">
+    <path d="M18,46 C44,54 56,58 60,62 L40,90 50,62 C30,58 22,52 18,46 Z"/>
+    <path d="M102,46 C76,54 64,58 60,62 L80,90 70,62 C90,58 98,52 102,46 Z"/>
+  </g>
 </svg>

@@ -57,6 +57,8 @@ async function main() {
   const urls = [
     SITE_URL,
     `${SITE_URL}/blog`,
+    `${SITE_URL}/work`,
+    `${SITE_URL}/about`,
     ...collectPostSlugs().map((slug) => `${SITE_URL}/blog/${slug}`),
     `${SITE_URL}/llms.txt`,
     `${SITE_URL}/llms-full.txt`,

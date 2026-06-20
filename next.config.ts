@@ -23,6 +23,9 @@ const withMDX = createMDX({
 
 const nextConfig: NextConfig = {
   pageExtensions: ["ts", "tsx", "md", "mdx"],
+  images: {
+    formats: ["image/avif", "image/webp"],
+  },
   turbopack: {
     root: __dirname,
   },
