@@ -109,12 +109,11 @@ export default function Home() {
           <div className="rd-tile rd-card">
             <p className="rd-meta">Elsewhere</p>
             <h2 className="rd-h3">Find me</h2>
-            <div className="rd-term">
-              <span className="out">
-                dev.to/iamrobindhiman<br />
-                github.com/iamrobindhiman<br />
-                hello@devrob.in
-              </span>
+            <div className="rd-term rd-links">
+              <a href="https://github.com/iamrobindhiman" target="_blank" rel="noopener">github.com/iamrobindhiman</a>
+              <a href="https://www.linkedin.com/in/iamrobindhiman/" target="_blank" rel="noopener">linkedin.com/in/iamrobindhiman</a>
+              <a href="https://dev.to/iamrobindhiman" target="_blank" rel="noopener">dev.to/iamrobindhiman</a>
+              <a href="mailto:hello@devrob.in">hello@devrob.in</a>
             </div>
           </div>
         </div>
