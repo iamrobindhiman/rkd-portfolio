@@ -173,7 +173,7 @@ img, svg { display: block; max-width: 100%; }
 .nav-links a:hover::before { transform: scaleX(1); }
 [data-theme="dark"] .nav-links a:hover { color: #000; }
 .nav-right { display: flex; align-items: center; gap: 16px; }
-.theme-toggle { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--rule); border-radius: 2px; color: var(--body); transition: all 150ms var(--ease); }
+.theme-toggle { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--rd-glass-bd); border-radius: 50%; color: var(--body); transition: all 150ms var(--ease); }
 .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 .theme-toggle svg { width: 13px; height: 13px; }
 @media (max-width: 640px) { .nav-links { gap: 16px; font-size: 13px; } .brand .tag { display: none; } }

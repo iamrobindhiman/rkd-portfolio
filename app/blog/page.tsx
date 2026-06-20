@@ -29,10 +29,10 @@ export default function BlogIndex() {
   return (
     <div className="rd-page">
       <div className="rd-wrap">
-        <p className="rd-meta rd-meta--accent">{"// Writing"}</p>
         <h1 className="rd-h1" style={{ fontSize: "clamp(40px, 6vw, 64px)" }}>Writing.</h1>
         <p className="rd-row-tags" style={{ marginTop: 14 }}>
-          <span style={{ color: "var(--accent)" }}>→ </span>ls -t ~/writing &nbsp;·&nbsp; {posts.length} notes on Magento, performance, security &amp; AI
+          <span style={{ color: "var(--accent)" }}>→ </span>
+          {`ls -t ~/writing  ·  ${posts.length} notes on Magento, performance, security & AI`}
         </p>
         <WritingList posts={posts} />
       </div>
