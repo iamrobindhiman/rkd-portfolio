@@ -355,7 +355,7 @@ section.sec { padding: clamp(5rem, 11vw, 10rem) 0; border-top: 1px solid var(--r
 .prose a { color: var(--accent); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; text-decoration-color: color-mix(in oklab, var(--accent) 45%, transparent); transition: text-decoration-color 150ms var(--ease); }
 .prose a:hover { text-decoration-color: var(--accent); }
 .prose blockquote { border-left: 2px solid var(--accent); padding-left: 20px; margin: 1.6em 0; color: var(--head); font-style: italic; max-width: 65ch; }
-.prose code:not(pre code) { font-family: var(--fm-code); font-weight: 500; font-size: 0.86em; background: color-mix(in oklab, var(--accent) 8%, var(--bg)); color: var(--accent); padding: 2px 7px; border-radius: 3px; letter-spacing: -0.01em; }
+.prose code:not(pre code) { font-family: var(--fm-code); font-weight: 500; font-size: 0.86em; background: color-mix(in oklab, var(--accent) 8%, var(--bg)); color: var(--accent); padding: 2px 7px; border-radius: 3px; letter-spacing: -0.01em; overflow-wrap: anywhere; }
 
 /* CODE BLOCKS — editor-style: always dark Tokyo Night bg, window chrome, line numbers */
 .prose .codeblock {
@@ -637,4 +637,4 @@ section.sec { padding: clamp(5rem, 11vw, 10rem) 0; border-top: 1px solid var(--r
 .rd-toc-item.is-sub a { padding-left: 26px; font-size: 12px; }
 .rd-toc-item a:hover { color: var(--body); }
 .rd-toc-item.is-active a { color: var(--accent); border-left-color: var(--accent); }
-@media (max-width: 900px){ .rd-article { grid-template-columns: 1fr; gap: 0; } .rd-article-toc { display: none; } }
+@media (max-width: 900px){ .rd-article { grid-template-columns: minmax(0, 1fr); gap: 0; } .rd-article-toc { display: none; } }
