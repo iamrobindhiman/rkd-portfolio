@@ -1,0 +1,65 @@
+---
+title: 'The EAV tax: why Magento product loads are slow'
+description: >-
+  Magento 2 scatters every product attribute across typed EAV tables. Here's why
+  loading them all wrecks category pages, and how to stop it.
+date: '2026-06-16'
+readTime: 5 min
+tags:
+  - Magento 2
+  - PHP
+  - Performance
+  - MySQL
+coverImage: /blog-images/the-eav-tax-why-magento-product-loads-are-slow-hero.jpg
+---
+Open a product in Magento 2 and ask your database what just happened. A single `addAttributeToSelect('*')` load does not fire one query. It fires one per attribute backend type, plus the static columns, plus stock and media. The same flexibility that lets you add a product attribute from the admin with no schema migration is what makes a full product load expensive.
+
+That is the EAV tax. Most of the "Magento is slow" reports I get handed are paying it without knowing.
+
+## What EAV actually stores
+
+A product is not a row. It is a row in `catalog_product_entity` for the static columns, and then its attribute values are scattered across typed value tables: `catalog_product_entity_varchar`, `_int`, `_decimal`, `_text`, `_datetime`. Each value row is keyed by `entity_id`, `attribute_id`, and `store_id`.
+
+To rebuild one product with all its attributes, Magento reads across every one of those tables and stitches the rows back into an object. Add a store view and the store-scoped values double the work.
+
+```sql
+SELECT e.entity_id, var.value AS name, dec.value AS price
+FROM catalog_product_entity e
+LEFT JOIN catalog_product_entity_varchar var
+  ON var.entity_id = e.entity_id AND var.attribute_id = 73
+LEFT JOIN catalog_product_entity_decimal dec
+  ON dec.entity_id = e.entity_id AND dec.attribute_id = 77
+WHERE e.entity_id = 42;
+```
+
+That is two attributes. Now picture `*`.
+
+## Why `addAttributeToSelect('*')` is the trap
+
+`*` means every attribute in the set. On a category grid showing 36 products, the card needs maybe six fields: name, price, thumbnail, url key, status, visibility. With `*` you loaded sixty. The other fifty-four were read, joined, hydrated, and thrown away before the page rendered.
+
+Name the columns you actually use:
+
+```php
+$collection->addAttributeToSelect([
+    'name', 'price', 'small_image', 'url_key', 'status', 'visibility',
+]);
+```
+
+This one change is the single biggest win I see on slow listing pages. It costs nothing and it ships in five minutes.
+
+## Stop rendering listings off the product collection
+
+The deeper fix is to not reassemble products from EAV on a listing at all. Category pages, layered navigation, and search should read from the index tables and OpenSearch, not loop a collection that re-hydrates every card from the value tables.
+
+Magento already maintains flattened index tables for this: `catalog_category_product_index` for membership, the price index for prices, the fulltext index for search. A tuned category page leans on those and only touches EAV for the handful of attributes the card template prints. If your category controller is iterating a product collection with `*`, that is the thing to pull apart first.
+
+## The flat catalog is not your escape hatch
+
+Older Magento answered EAV cost with the flat catalog: denormalize every attribute into one wide `catalog_product_flat` table and read a single row. Adobe deprecated it, and for good reason. It falls over the moment you have thousands of attributes because MySQL caps columns per table, and it adds a heavy indexer you have to keep green. On a current build, do not turn it on.
+
+## What I do instead
+
+Select named attributes, never `*`, in any collection that renders to a user. Push listing and filtering to OpenSearch so the storefront reads an index instead of replaying joins. For bulk reads like exports and feeds, walk the catalog by `entity_id` with keyset pagination and select only the fields you need, because a full `*` load across a six-figure catalog will melt the box.
+
+Then measure. Turn on the query log and count statements per request. When a single category page fires several hundred queries, EAV reassembly is almost always the reason, and now you know exactly which line put them there.
