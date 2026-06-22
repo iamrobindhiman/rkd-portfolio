@@ -1,0 +1,75 @@
+---
+title: Migrating a Magento 2 store from utf8 to utf8mb4 without losing data
+description: >-
+  MySQL's utf8 stores only three bytes per character, so emoji and some
+  international text get silently truncated. Here's the safe three-part
+  migration to
+date: '2026-06-13'
+readTime: 6 min
+tags:
+  - Magento 2
+  - MySQL
+  - PHP
+coverImage: >-
+  /blog-images/migrating-a-magento-2-store-from-utf8-to-utf8mb4-without-losing-data-hero.jpg
+---
+A customer signed up with an emoji in their display name, and the row saved with everything after the emoji chopped off. No error in the log. The column was `utf8`, and in MySQL `utf8` has never been real UTF-8.
+
+## `utf8` is a three-byte lie
+
+MySQL's `utf8` is an alias for `utf8mb3`: at most three bytes per character. It covers the Basic Multilingual Plane and stops there. Emoji, many CJK extension characters, and a pile of modern symbols are four bytes, and they do not fit.
+
+What happens when a four-byte character lands in a `utf8mb3` column depends on your SQL mode. In strict mode you get `Incorrect string value: '\xF0\x9F...'`. Without it, MySQL silently truncates the string at the offending byte and saves the rest. The second case is the dangerous one: no error, partial data, found weeks later in a support queue.
+
+`utf8mb4` is the fix. It is actual UTF-8, up to four bytes per character. New Magento installs use it. Plenty of stores set up years ago are still on `utf8mb3` and inherit every one of these bugs.
+
+## The migration looks like one line. It isn't.
+
+The naive version:
+
+```sql
+ALTER TABLE customer_entity CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Run that across a real Magento schema and you hit this fast:
+
+```
+ERROR 1071 (42000): Specified key was too long; max key length is 767 bytes
+```
+
+An index on a `VARCHAR` column is sized in bytes, and MySQL budgets for the widest possible character. Under `utf8mb3`, `VARCHAR(255)` costs 255 x 3 = 765 bytes, just under the old 767-byte limit. Under `utf8mb4` the same column wants 255 x 4 = 1020 bytes, and the index is rejected.
+
+Two ways out, and which one you need depends on your MySQL version:
+
+- **MySQL 5.7 with `innodb_large_prefix` enabled, or MySQL 8.0** (where it is the default): the index limit is 3072 bytes on `DYNAMIC` or `COMPRESSED` row format. Most columns just work. This is where you want to be.
+- **Older or misconfigured servers** still capped at 767 bytes: indexed string columns have to drop to 191 characters (191 x 4 = 764 bytes) or index a prefix. 191 isn't magic, it is just the largest count that still fits.
+
+Check the row format before you start:
+
+```sql
+SHOW TABLE STATUS WHERE Name = 'customer_entity';
+```
+
+## The column is only half of it
+
+Converting the column does nothing if the application still talks to the database as `utf8mb3`. Character set is negotiated on the connection. If the client opens with `SET NAMES utf8`, a four-byte character is mangled in transit before it ever reaches your new `utf8mb4` column.
+
+So the migration is three coordinated changes, not one:
+
+1. Database and tables: `ALTER ... CONVERT TO CHARACTER SET utf8mb4`. `CONVERT TO` rewrites the table and converts existing data, not just the default for new rows.
+2. Server defaults in `my.cnf` (`character-set-server`, `collation-server`), so new tables are born correct.
+3. The application connection charset, so reads and writes negotiate `utf8mb4` end to end.
+
+Miss the third and you will swear the migration worked from the `mysql` CLI while the storefront keeps corrupting data.
+
+## Two things that bite mid-migration
+
+**`CONVERT TO` is a full table rewrite.** On a large `sales_order` or `catalog_product_entity_varchar` table that means a long lock. Do it in a maintenance window, or run it through `pt-online-schema-change` or `gh-ost` so the table stays writable.
+
+**Collations have to match across joins.** Convert some tables and not others and the next query that joins them throws `Illegal mix of collations`. Pick one collation, apply it everywhere, and don't leave half the schema on the server default. `utf8mb4_unicode_ci` is a safe, widely compatible choice.
+
+## The lesson isn't really about Magento
+
+This is a MySQL story, not a Magento one. Any application sitting on `utf8mb3` carries the same latent bug and the same three-part fix. Magento just surfaces it early, because catalogs and customer data are full of exactly the international text and emoji that four bytes were invented for.
+
+If you are still on `utf8`, you don't have a Unicode-safe store. You have one that hasn't met the wrong character yet.

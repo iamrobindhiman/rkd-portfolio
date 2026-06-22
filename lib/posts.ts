@@ -11,6 +11,7 @@ export type PostMeta = {
   date: string;
   readTime: string;
   tags: string[];
+  coverImage?: string;
 };
 
 export function getAllPostSlugs(): string[] {
@@ -33,6 +34,7 @@ export function getPostMeta(slug: string): PostMeta | null {
     date: data.date ?? "",
     readTime: data.readTime ?? "",
     tags: data.tags ?? [],
+    ...(data.coverImage && { coverImage: data.coverImage }),
   };
 }
 

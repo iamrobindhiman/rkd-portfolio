@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getAllPostSlugs, getPostMeta, getAllPosts } from "@/lib/posts";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -24,6 +25,9 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const meta = getPostMeta(slug);
   if (!meta) return { title: "Not found" };
   const url = `https://devrob.in/blog/${slug}`;
+  const coverImageUrl = meta.coverImage
+    ? `https://devrob.in${meta.coverImage}`
+    : undefined;
   return {
     title: meta.title,
     description: meta.description,
@@ -36,11 +40,13 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       description: meta.description,
       publishedTime: toIsoWithTz(meta.date),
       authors: ["Robin Dhiman"],
+      ...(coverImageUrl && { images: [{ url: coverImageUrl }] }),
     },
     twitter: {
       card: "summary_large_image",
       title: meta.title,
       description: meta.description,
+      ...(coverImageUrl && { images: [coverImageUrl] }),
     },
   };
 }
@@ -79,7 +85,9 @@ export default async function PostPage({ params }: { params: Params }) {
           },
           datePublished: toIsoWithTz(meta.date),
           dateModified: toIsoWithTz(meta.date),
-          image: `${postUrl}/opengraph-image`,
+          image: meta.coverImage
+            ? `https://devrob.in${meta.coverImage}`
+            : `${postUrl}/opengraph-image`,
           mainEntityOfPage: postUrl,
           publisher: {
             "@type": "Person",
@@ -91,6 +99,18 @@ export default async function PostPage({ params }: { params: Params }) {
       <div className="rd-article">
         <div className="rd-article-main">
           <Link href="/blog" className="rd-article-back">← writing</Link>
+          {meta.coverImage && (
+            <div className="rd-article-hero">
+              <Image
+                src={meta.coverImage}
+                alt={meta.title}
+                width={1600}
+                height={900}
+                priority
+                sizes="(max-width: 900px) 100vw, 744px"
+              />
+            </div>
+          )}
           <p className="rd-meta rd-meta--accent" style={{ marginTop: 22 }}>{`// ${meta.tags[0] ?? "Writing"}`}</p>
           <h1 className="rd-article-title">{meta.title}</h1>
           <div className="rd-article-byline">{meta.date} · {meta.readTime} · Robin Dhiman</div>
