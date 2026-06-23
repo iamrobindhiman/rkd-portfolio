@@ -12,6 +12,7 @@ export default function Nav() {
         <nav className="rd-nav-right" aria-label="Primary">
           <Link className="rd-navlink" href="/blog">Writing</Link>
           <Link className="rd-navlink" href="/work">Work</Link>
+          <Link className="rd-navlink" href="/services">Services</Link>
           <Link className="rd-navlink" href="/about">About</Link>
           <SearchTrigger />
           <ThemeToggle />
