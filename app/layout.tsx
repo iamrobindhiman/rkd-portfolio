@@ -107,7 +107,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 hasOccupation: {
                   "@type": "Occupation",
                   name: "Web engineer",
-                  occupationalCategory: "15-1254.00",
+                  occupationalCategory: "Web developer (15-1254.00)",
                 },
                 areaServed: "Worldwide",
                 makesOffer: services.map((s) => ({

@@ -48,6 +48,7 @@ await checkPage("/", { jsonLdTypes: ["Person", "WebSite"] });
 await checkPage("/blog");
 await checkPage("/work");
 await checkPage("/about");
+await checkPage("/services", { jsonLdTypes: ["WebPage", "BreadcrumbList"] });
 if (slugs[0]) await checkPage(`/blog/${slugs[0]}`, { jsonLdTypes: ["Article"], needArticle: true });
 for (const p of ["/sitemap.xml", "/robots.txt", "/llms.txt", "/llms-full.txt"]) await check200(p);
 
