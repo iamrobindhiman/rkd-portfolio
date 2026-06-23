@@ -39,9 +39,15 @@ ${writing}
 
 ## Services
 
-Available for select engagements. Focus areas: Magento 2 / Hyvä, WordPress, Shopify, Laravel, and Next.js — backend-heavy builds and audits, AI-discoverability retrofits for existing stores, and senior contract or consulting where depth matters more than seat count. Remote-first, India-based (IST); comfortable with EU and US working hours.
+Robin Dhiman is available for hire. Magento 2 and Hyvä are the specialty; he also works across Shopify, WooCommerce/WordPress, Laravel, BigCommerce, and custom PHP.
 
-To discuss: email ${SITE_LINKS.email} with a short description of the problem. Typical response within one business day.
+- Magento & Hyvä development — custom modules, full builds, Hyvä migrations.
+- Magento performance audits — find and fix slow stores (EAV loads, index bloat, N+1 queries, slow checkout), with before/after numbers.
+- AI discoverability — make a store's catalog readable and recommendable by AI assistants (ChatGPT, Claude, Perplexity) via the llms.txt standard.
+- Senior contract / fractional engineering — senior depth embedded with your team for a sprint or a season, without adding headcount.
+- PHP & e-commerce across frameworks — Shopify (themes + apps), WooCommerce/WordPress, Laravel, BigCommerce, and custom PHP builds, integrations, and audits.
+
+Remote-first (IST; comfortable with EU and US hours). To discuss an engagement, email ${SITE_LINKS.email} with a short description of the problem — typical reply within one business day. Full details: ${SITE_URL}/services.
 
 ## FAQ
 
@@ -60,6 +66,10 @@ A sitemap lists URLs for search crawlers to fetch. llms.txt is the content itsel
 ### Where can I install the module?
 
 Via Composer: \`composer require rkd/module-llms-txt\`. Full README: https://github.com/iamrobindhiman/magento2-module-llms-txt.
+
+### Does Robin work beyond Magento?
+
+Yes. Magento 2 / Hyvä is the deep specialty, but he regularly works across Shopify (themes and apps), WooCommerce/WordPress, Laravel, BigCommerce, and custom PHP — backend-heavy builds, integrations, and audits.
 
 ## Full content for AI ingestion
 
