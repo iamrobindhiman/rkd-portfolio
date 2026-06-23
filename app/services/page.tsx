@@ -51,16 +51,24 @@ export default function Services() {
           <p className="rd-sub" style={{ marginTop: 12, maxWidth: "60ch" }}>
             {SERVICES_HOW}
           </p>
-          <p className="rd-row-tags" style={{ marginTop: 24 }}>
+          <div
+            style={{
+              marginTop: 28,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-start",
+              gap: 20,
+            }}
+          >
             <a className="rd-navlink" href={SERVICES_EMAIL_HREF}>
               Tell me what you&rsquo;re dealing with <span aria-hidden="true">→</span> hello@devrob.in
             </a>
-          </p>
-          <p className="rd-sub" style={{ marginTop: 16 }}>
-            More context:{" "}
-            <Link className="rd-navlink" href="/work">selected work</Link> ·{" "}
-            <Link className="rd-navlink" href="/blog">writing</Link>
-          </p>
+            <p className="rd-sub" style={{ margin: 0 }}>
+              More context:{" "}
+              <Link className="rd-navlink" href="/work">selected work</Link> ·{" "}
+              <Link className="rd-navlink" href="/blog">writing</Link>
+            </p>
+          </div>
         </section>
       </div>
 
