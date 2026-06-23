@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import { JsonLd } from "@/components/seo/JsonLd";
 import CommandPalette from "@/components/search/CommandPalette";
 import { getSearchIndex } from "@/lib/searchIndex";
+import { services } from "@/lib/services";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -94,9 +95,30 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   "https://www.linkedin.com/in/iamrobindhiman/",
                   "https://x.com/IAmRobinDhiman",
                 ],
-                jobTitle: "Senior web engineer",
-                knowsAbout: ["Magento 2", "Hyvä", "PHP", "Next.js", "E-commerce"],
                 email: "mailto:hello@devrob.in",
+                description:
+                  "Senior e-commerce engineer with fifteen years building production stores. Magento 2 / Hyvä specialist, working across Shopify, WooCommerce, Laravel, BigCommerce, and custom PHP.",
+                jobTitle: "Senior web engineer",
+                knowsAbout: [
+                  "Magento 2", "Hyvä", "PHP", "Shopify", "WooCommerce",
+                  "WordPress", "Laravel", "BigCommerce", "Next.js",
+                  "E-commerce", "Performance optimization", "AI discoverability",
+                ],
+                hasOccupation: {
+                  "@type": "Occupation",
+                  name: "Web engineer",
+                  occupationalCategory: "Web developer (15-1254.00)",
+                },
+                areaServed: "Worldwide",
+                makesOffer: services.map((s) => ({
+                  "@type": "Offer",
+                  itemOffered: {
+                    "@type": "Service",
+                    name: s.name,
+                    description: s.blurb,
+                    serviceType: s.serviceType,
+                  },
+                })),
               },
               {
                 "@type": "WebSite",

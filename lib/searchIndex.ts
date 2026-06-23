@@ -13,6 +13,7 @@ export function getSearchIndex(): SearchItem[] {
     { label: "Home", href: "/", kind: "Page" },
     { label: "Writing", href: "/blog", kind: "Page" },
     { label: "Work", href: "/work", kind: "Page" },
+    { label: "Services", href: "/services", kind: "Page" },
     { label: "About", href: "/about", kind: "Page" },
   ];
   const posts: SearchItem[] = getAllPosts().map((p) => ({
