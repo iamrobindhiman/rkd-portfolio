@@ -59,6 +59,7 @@ async function main() {
     `${SITE_URL}/blog`,
     `${SITE_URL}/work`,
     `${SITE_URL}/about`,
+    `${SITE_URL}/services`,
     ...collectPostSlugs().map((slug) => `${SITE_URL}/blog/${slug}`),
     `${SITE_URL}/llms.txt`,
     `${SITE_URL}/llms-full.txt`,
