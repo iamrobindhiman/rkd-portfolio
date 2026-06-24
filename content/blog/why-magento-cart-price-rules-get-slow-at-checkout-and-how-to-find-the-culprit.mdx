@@ -1,0 +1,83 @@
+---
+title: >-
+  Why Magento cart price rules get slow at checkout (and how to find the
+  culprit)
+description: >-
+  Magento 2 cart price rules run in PHP on every quote change. Here's why
+  complex promotions slow checkout, and how to find the rule that's costing you.
+date: '2026-06-23'
+readTime: 6 min
+tags:
+  - Magento 2
+  - Performance
+  - PHP
+coverImage: >-
+  /blog-images/why-magento-cart-price-rules-get-slow-at-checkout-and-how-to-find-the-culprit-hero.jpg
+---
+I have watched a checkout get slower every time the marketing team shipped a new promotion. Not the product page. Not the cart. The totals step: the recalculation Magento runs after every add, remove, or quantity change. Each new cart price rule added a little more lag, and nobody connected the rules to the slowdown.
+
+Here is what's actually going on under the hood.
+
+## Cart price rules run in PHP, on every recalculation
+
+A cart price rule is not a stored discount sitting in a column. It is a tree of conditions and a set of actions that Magento evaluates at runtime.
+
+Every time the quote changes, Magento recollects totals. Discount collection is one stage of that pass, handled by `Magento\SalesRule\Model\Quote\Discount`. During it, Magento takes the rules that apply to the current cart and validates each rule's conditions against the quote items.
+
+That validation is PHP. A loop over rules, and inside it, condition checks against items held in memory. There is no single clever query that returns "the right discount." It is procedural evaluation, and it reruns on every recalculation of the cart.
+
+So the cost scales with two numbers: how many rules apply, and how expensive each rule is to check.
+
+## The pre-filter is doing more than you think
+
+Magento does not evaluate every row in `salesrule`. The rule collection is narrowed first by website, customer group, coupon, and the current date before any conditions are checked. A rule scoped to one website and one customer group gets dropped early for everyone else.
+
+This is the cheapest performance win available, and most stores ignore it. Start by counting what is actually live:
+
+```sql
+SELECT rule_id, name, from_date, to_date, sort_order
+FROM salesrule
+WHERE is_active = 1
+  AND (to_date IS NULL OR to_date >= CURDATE())
+ORDER BY sort_order;
+```
+
+If that returns 200 rows and your business runs maybe a dozen real promotions, you have 188 rules being filtered on every cart change for no reason. Expired campaigns that were never disabled. "Temporary" rules from two years ago. Each one is still work.
+
+Disable what you don't use. Scope what you keep as tightly as the campaign allows.
+
+## Conditions are where the time goes
+
+Not all conditions cost the same.
+
+A condition on subtotal or quantity is cheap. The values are already on the quote. A condition that asks "does the cart contain a product in category X" is not. Category membership has to be resolved per item.
+
+Worse are conditions on product attributes. When a rule references a product attribute, Magento has to make that attribute available on the items during validation. It tracks which attributes rules care about in `salesrule_product_attribute`, then loads them so the conditions can run. Reference a heavy or rarely-loaded attribute in a rule condition and you have added an attribute load to a hot path.
+
+The lesson: build conditions out of data the quote already has. Reach for category and attribute conditions only when a campaign genuinely needs them, and know you are paying for them on every recalculation.
+
+## The table everyone forgets: salesrule_coupon
+
+Auto-generated coupon batches live in `salesrule_coupon`. Generate a million codes for a campaign and the table holds a million rows. Lookups by code are indexed, so a single redemption stays fast, but the table itself grows without bound because expired campaigns rarely get cleaned up.
+
+Check its size. If it is large and most of the codes belong to dead campaigns, archive them.
+
+## Finding the actual culprit
+
+Two ways, fastest first.
+
+**Binary-search the rules.** Disable half the active rules, reproduce the cart flow, measure. Narrow until one rule stands out. Crude, but it works in minutes and needs no tooling.
+
+**Profile it.** Point Blackfire or Xdebug's profiler at a cart update and look at the time spent under the discount totals collector and the sales rule validator. The expensive rule shows up as the condition path that dominates.
+
+You are looking for one of two shapes: too many rules being validated, or one rule whose conditions are doing real work per item.
+
+## What I would do, in order
+
+1. Count active rules. Disable the dead ones. This alone often fixes it.
+2. Tighten scope (website, customer group, dates) so the pre-filter throws rules out early.
+3. Audit conditions. Replace category and attribute conditions with cheaper ones wherever the campaign allows.
+4. Check `salesrule_coupon` size and archive spent batches.
+5. Only then reach for the profiler, with a specific rule in your sights.
+
+Promotions feel like a marketing concern until they show up in your checkout timings. They run on every cart change, in PHP, and they compound quietly. Treat the rule table like code: review it, delete what's dead, and keep the conditions cheap.
