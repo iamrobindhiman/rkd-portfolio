@@ -1,0 +1,86 @@
+---
+title: Enriching a large Magento catalog without melting the indexer
+description: >-
+  Sourcing descriptions and attributes for thousands of SKUs is the easy part.
+  Applying them to a Magento 2 catalog without reindex storms is the real work.
+date: '2026-06-26'
+readTime: 6 min
+tags:
+  - Magento 2
+  - PHP
+  - Performance
+coverImage: >-
+  /blog-images/enriching-a-large-magento-catalog-without-melting-the-indexer-hero.jpg
+---
+Every few weeks the same question shows up in a Magento forum: thousands of SKUs, missing attributes, thin descriptions, no translations. How do I enrich all of it? The replies are always about sources. Icecat for attributes. An LLM for descriptions. A feed for the marketplace fields.
+
+Sourcing the data has a thousand tutorials. Getting it into the catalog without taking the store down has almost none. That second part is the actual job.
+
+## The mistake everyone makes first
+
+You write the obvious loop. Load product, set value, save.
+
+```php
+foreach ($productIds as $id) {
+    $product = $this->productRepository->getById($id);
+    $product->setData('description', $descriptions[$id]);
+    $this->productRepository->save($product);
+}
+```
+
+Every `save()` runs the full product lifecycle: validation, every save-after observer and plugin, and a reindex trigger. At 50,000 products you've fired that machinery 50,000 times. The script runs for hours, the indexer thrashes, and admin grinds while it does.
+
+The product save path is built for a human editing one product in the admin. It is the wrong tool for touching the whole catalog.
+
+## Set shared values in bulk
+
+When you're writing the same value to many products (a marketplace flag, a country of manufacture, a default brand), Magento already ships the right tool:
+
+```php
+// Magento\Catalog\Model\Product\Action
+$this->productAction->updateAttributes(
+    $batchOfIds,                       // 1-2k entity IDs per call
+    ['country_of_manufacture' => 'IN'],
+    $storeId                           // 0 = default scope
+);
+```
+
+`updateAttributes()` writes straight to the attribute's backend table for the whole batch and skips the full model save. One operation instead of N lifecycles. For genuinely distinct values per product, like unique descriptions, group your writes and keep them off the `productRepository->save()` path. The moment you're saving the full model in a loop, you've already lost.
+
+## Put the indexer on schedule before you start
+
+Switch your indexers to **Update by Schedule** before any bulk run.
+
+On *Update on Save*, every write reindexes synchronously and your enrichment job fights the indexer for the whole run. On schedule, writes drop into the changelog and mview reindexes only the changed rows on cron. You enrich fast, then reindex the delta once.
+
+```bash
+bin/magento indexer:set-mode schedule
+```
+
+## Translations live at store-view scope
+
+A translated description isn't a column on the product. It's an attribute value scoped to a store view. Write German to the German store view's id, not to the default scope. And don't clobber the default value with one language while you're at it.
+
+That `$storeId` argument on `updateAttributes()` is the same lever: pass the store-view id to set the localized value, and leave the global value alone.
+
+## The AI part, on a short leash
+
+An LLM will draft decent product copy across thousands of SKUs in one pass. It will also state, with total confidence, that a cable is 2 metres, a shirt is 100% cotton, and a case fits a phone it has never heard of.
+
+So treat generated copy as a draft, never as truth:
+
+- Generate into a staging field or a disabled scope, not straight onto the live product page.
+- Sample-review a real slice before you trust the batch.
+- Keep anything load-bearing (dimensions, materials, compatibility, claims) sourced and verified, not generated.
+
+A wrong spec on a product page is a returns problem, and on regulated goods it's a bigger one than that.
+
+## An order of operations that survives 50k SKUs
+
+1. Indexers to **scheduled**.
+2. Enrich into staging: a holding field or a disabled scope nobody can see yet.
+3. Bulk-apply in batches of 1-2k IDs, off the full save path.
+4. Reindex the delta, then smoke-test a real sample of product pages.
+5. Only then flip visibility.
+
+The data sources are the easy 20%. The catalog is a live system with an indexer, a cache, and customers on it. Enrich it like one and 50,000 SKUs is a non-event. Loop over `save()` and you'll find out how long an afternoon can be.
