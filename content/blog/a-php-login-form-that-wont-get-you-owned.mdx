@@ -1,0 +1,119 @@
+---
+title: A PHP login form that won't get you owned
+description: >-
+  The five mistakes hand-rolled PHP login forms keep making: weak hashing,
+  string-built SQL, session fixation, user enumeration, no rate limiting.
+date: '2026-06-24'
+readTime: 6 min
+tags:
+  - PHP
+  - Security
+  - Backend
+coverImage: /blog-images/a-php-login-form-that-wont-get-you-owned-hero.jpg
+---
+A login form is the most-copied, least-reviewed piece of PHP on the internet. Someone needs auth, they paste a tutorial from 2014, it "works," and it ships. Then it leaks.
+
+I've reviewed a lot of these. The same five mistakes show up every time. None of them are exotic. All of them are one function call away from being fixed.
+
+## 1. Hashing passwords by hand
+
+If your code contains `md5()`, `sha1()`, or a salt you generated yourself, stop. PHP has had a real password API since 5.5.
+
+```php
+// On signup
+$hash = password_hash($password, PASSWORD_DEFAULT);
+
+// On login
+if (password_verify($password, $hash)) {
+    // authenticated
+}
+```
+
+`password_hash()` picks a strong algorithm (bcrypt by default, Argon2id if you pass `PASSWORD_ARGON2ID`), generates the salt for you, and stores the cost inside the hash string. `password_verify()` does a constant-time comparison, so you don't leak timing. You never handle a salt again.
+
+When you raise the cost later, `password_needs_rehash()` lets you re-hash transparently on the user's next login.
+
+## 2. Building the query with string concatenation
+
+```php
+// Don't
+$sql = "SELECT * FROM users WHERE email = '$email'";
+```
+
+That's SQL injection, on the front door of your app. Use a prepared statement and let the driver escape:
+
+```php
+$stmt = $pdo->prepare('SELECT id, password_hash FROM users WHERE email = ?');
+$stmt->execute([$email]);
+$user = $stmt->fetch();
+```
+
+Select only the columns you need. `SELECT *` on a user row pulls fields you'll expose by accident later.
+
+## 3. Not regenerating the session ID
+
+This one is invisible until someone exploits it. If you attach the logged-in state to the same session ID the visitor arrived with, you're open to session fixation: an attacker who can plant a victim's session ID before login inherits the authenticated session after.
+
+One line, right after the password checks out:
+
+```php
+session_regenerate_id(true);
+$_SESSION['user_id'] = $user['id'];
+```
+
+Regenerate on login, and again on logout and any privilege change.
+
+## 4. Telling attackers which half they got right
+
+```php
+// Leaks which emails exist
+if (!$user) {
+    echo 'No account with that email';
+} elseif (!password_verify($password, $user['password_hash'])) {
+    echo 'Wrong password';
+}
+```
+
+Two different messages turn your login form into a user-enumeration oracle. An attacker scripts it to learn which emails are registered, then focuses on those.
+
+Return one message for both cases:
+
+```php
+if (!$user || !password_verify($password, $user['password_hash'])) {
+    $error = 'Invalid email or password';
+}
+```
+
+To close the timing gap when the user doesn't exist, verify against a dummy hash so both paths do the same work.
+
+## 5. Letting them guess forever
+
+`password_hash()` is deliberately slow, which buys you a lot. It does not stop someone running a few hundred guesses at one account. That needs rate limiting.
+
+The cheap version: count failed attempts per email and per IP in a fast store (Redis, or an indexed table), then refuse or delay past a threshold. Reset the counter on success.
+
+You don't need a library to start. You need a counter and a ceiling.
+
+## The shape of a correct login
+
+Put together, the whole thing is short:
+
+```php
+$stmt = $pdo->prepare('SELECT id, password_hash FROM users WHERE email = ?');
+$stmt->execute([$email]);
+$user = $stmt->fetch();
+
+if (!$user || !password_verify($password, $user['password_hash'])) {
+    // generic error, bump the rate-limit counter
+    return $this->fail('Invalid email or password');
+}
+
+session_regenerate_id(true);
+$_SESSION['user_id'] = (int) $user['id'];
+```
+
+No custom crypto. No string-built SQL. One error message. A fresh session. A counter on top.
+
+None of this is new. `password_hash()` landed in PHP 5.5, prepared statements are older still, and `session_regenerate_id()` has been there the whole time. The tools are old and boring. The mistakes survive because the tutorials never caught up.
+
+If you maintain a PHP app with hand-rolled auth, read your login controller today. The fix is usually five small edits, not a rewrite.
