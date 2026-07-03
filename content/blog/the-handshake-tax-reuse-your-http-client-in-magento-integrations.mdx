@@ -1,0 +1,80 @@
+---
+title: 'The handshake tax: reuse your HTTP client in Magento integrations'
+description: >-
+  A new HTTP client per API call quietly slows Magento sync jobs. The cost is
+  repeated TLS handshakes — here's how connection reuse fixes it.
+date: '2026-07-02'
+readTime: 5 min
+tags:
+  - Magento 2
+  - PHP
+  - Performance
+  - API Integration
+coverImage: >-
+  /blog-images/the-handshake-tax-reuse-your-http-client-in-magento-integrations-hero.jpg
+---
+I had a product export that talked to a third-party pricing API. One product, fast. The full catalog was painfully slow. The database was barely doing anything, so I went looking, and the profiler pointed somewhere I didn't expect: the network, before a single request was even sent.
+
+The code created a fresh HTTP client on every iteration of the loop.
+
+## The handshake tax
+
+Before you send one byte of an HTTPS request, the machine does a lot of quiet work.
+
+A TCP handshake to open the socket. Then a TLS handshake on top: certificate exchange, key negotiation, several round trips across the wire. Only after all of that does your actual `GET` or `POST` go out.
+
+Do it once and reuse the connection, you pay that tax once. Do it inside a loop over 40,000 products, you pay it 40,000 times. The request bodies are tiny. The setup is the whole bill.
+
+## PHP tricks you into it
+
+PHP is share-nothing. Every web request starts cold, so it feels natural to build a client, use it, and throw it away. For a single web request that hits one API once, that's fine. You were going to pay one handshake anyway.
+
+The trap is the long-running process. A cron job, a `bin/magento` console command, a message-queue consumer syncing records to an ERP or a PIM. Those loop. And inside the loop, a lot of Magento integration code looks like this:
+
+```php
+foreach ($products as $product) {
+    $client = new \GuzzleHttp\Client();   // new connection every time
+    $client->post('https://api.example.com/sync', [
+        'json' => $this->toPayload($product),
+    ]);
+}
+```
+
+Every iteration opens a new connection, runs the full TCP + TLS dance, sends a few hundred bytes, and tears the connection down. The handshake runs N times for N products.
+
+## Reuse one client
+
+Guzzle keeps the underlying connection alive between requests made on the same client instance. So build it once, outside the loop:
+
+```php
+$client = new \GuzzleHttp\Client([
+    'base_uri' => 'https://api.example.com',
+    'headers'  => ['Connection' => 'keep-alive'],
+]);
+
+foreach ($products as $product) {
+    $client->post('/sync', ['json' => $this->toPayload($product)]);
+}
+```
+
+Same requests, same payloads. But now the socket and the TLS session are reused across the loop. You handshake once, then stream the rest over the open connection.
+
+In a Magento module, go one step further and don't `new` the client at all. Inject a configured client, or a small wrapper service, through the constructor. The same instance gets shared, and the connection survives across the calls that matter.
+
+## The louder version
+
+In a long-lived runtime the same mistake gets worse. Create a client per call in a hot path and the cost compounds: on top of the repeated handshakes, you can run the machine out of outbound ports, because closed connections pile up in `TIME_WAIT` faster than the OS reclaims them. The service stops being able to open new sockets at all. Same root cause, much louder failure.
+
+PHP's request model usually saves you from that specific cliff. It does not save you from the latency.
+
+## How to find it
+
+Grep your integration code for clients built inside loops, or hidden in a method that runs once per record:
+
+```
+grep -rn "new .*Client(" app/code | grep -i http
+```
+
+Look for any `new \GuzzleHttp\Client()` (or a raw `curl_init()`) sitting inside a `foreach`. That's the line paying the handshake tax on every pass.
+
+Move the client up, out of the loop, and let the connection stay open. It's a one-line change. On a sync that touches thousands of records, it's the cheapest speedup you'll find all day.
