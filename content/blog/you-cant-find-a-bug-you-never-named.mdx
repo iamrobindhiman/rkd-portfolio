@@ -1,0 +1,112 @@
+---
+title: You can't find a bug you never named
+description: >-
+  A bug is a violated rule. If the rule was never written down, neither your
+  tests nor your reviewer has anything to check against.
+date: '2026-07-14'
+readTime: 6 min
+tags:
+  - Magento 2
+  - PHP
+  - Code Review
+  - Testing
+coverImage: /blog-images/you-cant-find-a-bug-you-never-named-hero.jpg
+---
+There's a post going around arguing that every project should ship an `invariants.md`. I agree. What convinced me wasn't a blog post, though. It was a SELECT statement.
+
+## The query that every test approved
+
+In a review of a split-settlement module for a multi-vendor marketplace, a resource model built a query that read `base_shipping_refunded` off `sales_creditmemo`. That column isn't on the credit memo. It's on `sales_order`. The first real refund in production would have thrown.
+
+The unit tests were green. All of them. The resource model was mocked, and a mock returns whatever you told it to return, including a value for a column that has never existed in any database anywhere.
+
+Static analysis didn't care either. The column name is a string.
+
+So the code cleared every gate we had, and the bug was still sitting in the diff, in plain sight, unremarked. Not because anyone was sloppy. Because nothing in the project stated the rule it broke.
+
+## A finding is a violated rule
+
+Here's the reframe that changed how I review code.
+
+A bug isn't a smell or an ugliness. A bug is a specific statement about the system that is supposed to be true and isn't. "The settlement legs sum to what the customer paid." "The same webhook delivered twice moves money once." "Every column a query names exists on the table it names."
+
+Which means: **you cannot find a violation of a rule you never wrote down.** A reviewer reading a diff cold is doing two jobs at once. Inferring what the system is supposed to guarantee, then checking whether this code breaks it. The first job is the hard one, and it gets redone, badly, by every person who opens the file.
+
+Write the rules down once and reviewing collapses into a smaller task: take each statement, try to break it.
+
+## What they actually look like
+
+Not architecture. Not "the code should be clean." Falsifiable statements about state:
+
+```markdown
+# invariants.md (settlement)
+
+CONSERVATION
+- sum(settlement legs on an order) == the amount the customer actually paid.
+- No path creates money. No path destroys it. A refund reduces legs; it never mints one.
+
+IDEMPOTENCY
+- Any gateway callback may be delivered twice. Processing it twice moves money once.
+- Every write is keyed by the gateway's own reference, unique-constrained in the schema.
+
+ORDERING
+- A payout release refuses while any refund on that order is open.
+- A leg never goes from settled back to pending.
+
+ISOLATION
+- One vendor's failed leg does not block another vendor's payout on the same order.
+
+SCHEMA
+- Every column a query names exists on the table it names. Verified against db_schema.xml,
+  not against a mock.
+```
+
+Each line is testable, arguable, and either true or false of a given code path. That last one exists purely because of the SELECT above. An invariants file is where you keep the scar tissue.
+
+## Point the review at the list
+
+The list earns its keep at review time, and it earns it twice over when the reviewer is a model.
+
+"Look for bugs in this diff" produces plausible findings, and you spend the afternoon disproving them. "Prove none of these six statements can be broken by this diff, and give me the exact inputs that break the one that can" produces something you can act on. The rules give the review a shape, and they give you grounds to reject a finding that isn't anchored to one.
+
+They also make disagreement useful. On that same review, two reviewers reached opposite conclusions about whether a credit memo could over-refund tax. Neither position was checkable against a vibe. Both were checkable against the invariant, and the invariant was checkable against the framework source. Reading the core class that registers a credit-memo item settled it in ten minutes: the refunded amount it tracks is tax-exclusive, so the over-refund was real.
+
+A model's finding is a lead. The invariant tells you which lead is worth chasing. The source tells you whether it's true.
+
+## Turn the ones you can into assertions
+
+Some invariants become queries. Conservation is the obvious one:
+
+```sql
+SELECT o.entity_id,
+       o.base_grand_total,
+       SUM(l.base_amount) AS legs
+FROM   sales_order o
+JOIN   vendor_settlement_leg l ON l.order_id = o.entity_id
+GROUP  BY o.entity_id, o.base_grand_total
+HAVING ABS(o.base_grand_total - SUM(l.base_amount)) > 0.01;
+```
+
+Zero rows means the money conserves. Run it nightly against production and a paragraph of intent has become an alarm.
+
+Idempotency usually becomes a unique key rather than a test, which is stronger. If the gateway reference is unique in `db_schema.xml`, a redelivered webhook cannot insert a second leg no matter what the application layer does. Enforce it where it can't be forgotten.
+
+Others stay prose. "One vendor's failure doesn't freeze another vendor's payout" was one we couldn't fully hold. The credit-memo freeze in that module is order-wide, so a dispute on one vendor's item does hold the rest. We shipped it anyway as a documented trade-off, and it got to be a decision instead of an argument only because it was written down as a named rule with a known blast radius.
+
+## What this doesn't fix
+
+An invariants file doesn't tell you the truth. It tells you what to check.
+
+The schema rule is the clearest case. Writing "every column exists" changes nothing by itself. It becomes real when someone opens `db_schema.xml` and reads the table definition instead of trusting a green test. Mocked tests do not validate columns. They never have. That's the gate most reviews skip, and it costs about four minutes.
+
+## The habit
+
+Before the next module goes to review, write the file. Six to ten lines. What must always be true, stated specifically enough to be wrong.
+
+Then review against it, and treat anything you find that isn't on the list as evidence the list is incomplete.
+
+The bug I opened with was caught by reading a schema file, not by being clever. That's usually how it goes.
+
+---
+
+_Source / further reading: https://twitter.com/PiccoGabriele/status/2076876444760957440_
