@@ -1,0 +1,54 @@
+---
+title: The docs were right — for a version I didn't have installed
+description: >-
+  A third-party Magento module's docs said one thing; the installed 0.6.2 source
+  said another. Why vendor/ is the only reference you can trust.
+date: '2026-07-15'
+readTime: 5 min
+tags:
+  - Magento 2
+  - PHP
+  - Debugging
+coverImage: /blog-images/the-docs-were-right-for-a-version-i-didnt-have-installed-hero.jpg
+---
+I was building a read-only admin grid over a custom entity. One row per record, two filters, no edit form. The kind of thing Magento's native UI components make you write 200 lines of XML for, so I reached for Loki AdminComponents (`loki/magento2-admin-components`), an Alpine.js-based grid framework that does the same job with a fraction of the markup.
+
+The first filter I added threw on page load:
+
+```
+Field type "text" not found
+```
+
+I had copied that filter config straight from the module's documentation. The docs said `field_type="text"` was valid. The installed module disagreed.
+
+## The docs and the code had drifted
+
+Here is what actually happened. The documentation described a version of the module that was not the version sitting in my `vendor/` folder. Between the doc's examples and the release Composer had resolved for me (`0.6.2`), the accepted filter field types had changed. `text` was no longer one of them.
+
+No amount of re-reading the docs would have surfaced that. They were internally consistent and completely wrong for my install.
+
+The fix took two minutes once I stopped trusting the documentation and opened the source that was actually going to run:
+
+```bash
+grep -rn 'field_type' vendor/loki/magento2-admin-components/src
+```
+
+The installed code enumerates exactly which field types it accepts. I picked one that existed and the exception went away. Then I hit three more gotchas building that grid, and every one resolved the same way: not with a web search, but by reading the class in `vendor/` that Magento was about to instantiate.
+
+## Why this keeps happening
+
+Third-party Magento modules move faster than their READMEs. A constraint like `^0.6` pulls whatever minor the resolver picks, and the published docs usually track the main branch, not the tag you actually got. The gap between what the docs describe and what sits in your `vendor/` tree is where the afternoon goes.
+
+AI in the loop makes this trap deeper, not shallower. A coding assistant that writes a filter config for you is drawing on whatever it absorbed about the module: the public docs at best, a stale blog post at worst. It will hand you `field_type="text"` with total confidence, because that used to be correct. It has no idea which minor version is pinned in your lockfile. Your `vendor/` folder is the only thing that does.
+
+## The rule
+
+For any third-party Magento module, the installed source in `vendor/` is the authoritative reference. The README is a hint. The docs site is a hint. The assistant is a hint. The class Magento is about to run is the fact.
+
+Before I trust a config option from a module I don't control:
+
+1. Open the class in `vendor/` that consumes the option.
+2. Read what it actually accepts: the constant list, the switch, the constructor signature.
+3. Match the config to that, not to the example I found online.
+
+It feels slower. It is faster. Mocked tests won't cover for you here either: a unit test with a mocked dependency will happily accept a config the real class rejects at runtime, because the mock doesn't know the constant list moved. The ground truth is the installed code, not the thing standing in for it.
